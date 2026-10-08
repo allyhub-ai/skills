@@ -39,4 +39,4 @@ Node.js 22.19 or newer. The CLI downloads headless Chrome the first time it need
 
 ## License
 
-The skill and plugin files in this repository are under the [MIT License](LICENSE). The AllyHub CLI they use is proprietary and has its own license. "AllyHub" and its logos are trademarks of AllyHub; the MIT License does not grant the right to use them.
+The skill and plugin files in this repository are under the [MIT License](LICENSE). The AllyHub CLI they use is proprietary and has its own license. "AllyHub" and its logos are trademarks of AllyHub, Inc.; the MIT License does not grant the right to use them.
