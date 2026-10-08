@@ -20,18 +20,30 @@
     "captions"
   ],
   "skills": "./skills/",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/allyhub-setup/SKILL.md"
+    }
+  },
   "interface": {
     "displayName": "AllyHub",
     "shortDescription": "Product demo videos from a few sentences",
     "longDescription": "Make product demo videos from a few sentences, plus launch videos, short social clips and slide decks, with your coding agent. It writes them in a workspace on this computer, you watch them in a live preview and circle what should change, and it renders MP4s, captions, PDFs and PPTX locally. No account needed. Voices, generated images and web research come from your allyhub.com account, priced before each paid call.",
     "developerName": "AllyHub",
     "category": "Creativity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://allyhub.com",
     "defaultPrompt": [
       "Make a 30-second launch video for this product",
       "Make a product demo video from this URL",
       "Turn this document into a short slide deck"
-    ]
-  }
+    ],
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/icon.svg"
+  },
+  "mcpServers": "./chatgpt.mcp.json"
 }
