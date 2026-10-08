@@ -1,0 +1,17 @@
+{
+  "name": "allyhub",
+  "owner": {
+    "name": "AllyHub",
+    "url": "https://allyhub.com"
+  },
+  "plugins": [
+    {
+      "name": "allyhub",
+      "source": "./",
+      "description": "Product demo videos from a few sentences, made by your coding agent. Runs on this computer.",
+      "homepage": "https://github.com/allyhub-ai/skills",
+      "license": "MIT"
+    }
+  ],
+  "description": "AllyHub: product demo videos from a few sentences, made by your coding agent."
+}

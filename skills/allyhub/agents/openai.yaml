@@ -1,0 +1,4 @@
+interface:
+  display_name: "AllyHub"
+  short_description: "Product demo videos from a few sentences"
+  default_prompt: "Use $allyhub to make a launch video for this project, open the preview, and take my feedback from the page."

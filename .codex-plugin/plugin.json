@@ -1,0 +1,37 @@
+{
+  "name": "allyhub",
+  "description": "Product demo videos from a few sentences, made by your coding agent. It previews, checks and renders on this computer with no account. Voices, generated images and research come from your allyhub.com account when you want them, priced before each paid call.",
+  "version": "0.1.0-alpha.1",
+  "author": {
+    "name": "AllyHub",
+    "url": "https://allyhub.com"
+  },
+  "homepage": "https://github.com/allyhub-ai/skills",
+  "repository": "https://github.com/allyhub-ai/skills",
+  "license": "MIT",
+  "keywords": [
+    "allyhub",
+    "video",
+    "slides",
+    "deck",
+    "animation",
+    "rendering",
+    "voiceover",
+    "captions"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AllyHub",
+    "shortDescription": "Product demo videos from a few sentences",
+    "longDescription": "Make product demo videos from a few sentences, plus launch videos, short social clips and slide decks, with your coding agent. It writes them in a workspace on this computer, you watch them in a live preview and circle what should change, and it renders MP4s, captions, PDFs and PPTX locally. No account needed. Voices, generated images and web research come from your allyhub.com account, priced before each paid call.",
+    "developerName": "AllyHub",
+    "category": "Creativity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://allyhub.com",
+    "defaultPrompt": [
+      "Make a 30-second launch video for this product",
+      "Make a product demo video from this URL",
+      "Turn this document into a short slide deck"
+    ]
+  }
+}

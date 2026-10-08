@@ -1,0 +1,12 @@
+{
+  "name": "allyhub",
+  "description": "Product demo videos from a few sentences, made by your coding agent. It previews, checks and renders on this computer with no account. Voices, generated images and research come from your allyhub.com account when you want them, priced before each paid call.",
+  "version": "0.1.0-alpha.1",
+  "author": {
+    "name": "AllyHub",
+    "url": "https://allyhub.com"
+  },
+  "homepage": "https://github.com/allyhub-ai/skills",
+  "repository": "https://github.com/allyhub-ai/skills",
+  "license": "MIT"
+}
