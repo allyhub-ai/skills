@@ -40,6 +40,7 @@ These are what the build, the checks and the render depend on. Everything else i
 ## Ask first
 
 - **Paid tools can lift the result a lot.** A real voiceover, generated images or footage, and composed music often make the difference between a good piece and a great one. Unless the person has already said no to paid tools, tell them which ones would improve this piece, what each would add, and the total estimate price for the video (`allyhub tools search <words>`, then `allyhub tools price <name> --input '{…}'` for each). Then let them choose. They cost the person's credits: get their yes before each paid plan.
+- **Finding a tool**: `allyhub tools search` matches the words of tool names and descriptions literally, so give several at once (`allyhub tools search voice speech tts narration`). When it misses, list a group (`allyhub tools list --group media`), or run `allyhub tools catalog` and search the file it prints (one tool per line) with your own tools.
 - **Sign-in**: when `allyhub tools` says the computer is not signed in, offer to sign in; on a yes, run `allyhub login`, show the address it prints, and wait. Never ask for or type a password or key. `allyhub login` and `allyhub doctor` name the AllyHub it talks to; `ALLYHUB_API_URL` and `ALLYHUB_WEB_URL` point it at another one (a test or local server).
 - **Sharing is the person's to do**: never post, send or publish what you made unless they ask.
 - **Facts**: never make up a number, a quote or a claim about a product. Use what the person or a source gives you, and ask when it is missing.
