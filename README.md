@@ -31,6 +31,8 @@ claude plugin marketplace add allyhub-ai/skills
 claude plugin install allyhub@allyhub
 ```
 
+Installed as a plugin, Claude Code also gets the **AllyHub pane**: the project card of the workspace your agent is working in (each video and deck, whether the check passed, exports and their files), kept up to date while the preview runs. Its buttons open the editor in the desktop app's browser pane, and when a turn ends the editor comes back in front if it was closed. `/allyhub` opens the pane. (The pane is built on Claude Code's function hooks, an early-access API.)
+
 Codex users can also install it from the `.codex-plugin` package in this repository. The CLI can also write the skill where your agent looks: `npx allyhub skill install`.
 
 ## What you need
