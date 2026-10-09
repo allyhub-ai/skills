@@ -8,5 +8,6 @@
   },
   "homepage": "https://github.com/allyhub-ai/skills",
   "repository": "https://github.com/allyhub-ai/skills",
-  "license": "MIT"
+  "license": "MIT",
+  "types": "./types/index.d.ts"
 }

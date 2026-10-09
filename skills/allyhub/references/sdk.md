@@ -110,7 +110,7 @@ export default defineConfig({
 | Option   | Description                                                                                                                                                                                                |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `voice`  | The voiceover per language: an imported audio file, a path relative to this file, or `{ file, offset?, lead?, tail?, musicDb? }`. The word-level timings are the `.words.json` of the same name next to it |
-| `music`  | The music: audio (an import or a path), or `{ file?, bpm?, followVoice? }`. Without a voiceover, part lengths snap to the beat of `bpm`                                                                    |
+| `music`  | The music: audio (an import or a path), or `{ file?, bpm?, followVoice? }`; `file` can be one per language (`{ en: a, "zh-cn": b }`, a language without one has no music). Without a voiceover, part lengths snap to the beat of `bpm` |
 | `sfx`    | Whether the components' sound-effect cues make sound, `true` by default                                                                                                                                    |
 | `look`   | The look name, `clean` by default; when the workspace has no such look, `clean` is used                                                                                                                         |
 | `prefix` | The messages key prefix of this output: each part's voiceover script is `<prefix>.<part>.vo`, and its chapter title is `<prefix>.<part>.title`. The default is the piece's `id` with `/` replaced by `.`   |
@@ -121,7 +121,7 @@ export default defineConfig({
 | `motionBlur`  | `{ samples, shutter? }`: each frame blends `samples` (2–16) moments across `shutter` (0–1, default 0.5) of the frame's time. Renders take `samples` times as long |
 | `post`        | `{ filter?, lut? }`: an ffmpeg filter chain over the frames (`"eq=contrast=1.05,noise=alls=6:allf=t"`; one chain, no files, no changes to timing or size), then a `.cube` LUT relative to the piece |
 
-The voiceover defaults: `offset` 0.5 s (the silence before the first word), `lead` 0.35 s (how much earlier a part starts than its first word), `tail` 2.5 s (how long the last part holds after the last word), `musicDb` −8 (how much the music is lowered while someone speaks).
+The voiceover defaults: `offset` 0.5 s (the silence before the first word), `lead` 0.35 s (how much earlier a part starts than its first word), `tail` 2.5 s (how long the last part holds after the last word), `musicDb` −8 (how much the music is lowered while someone speaks). The music stays lowered through pauses shorter than 2 s, so it is one steady bed under a narration, and comes back up between paragraphs and where nobody speaks. A voiceover makes the video as long as it needs: music shorter than the video leaves the end without music (AK-A004); give each language music of its own length.
 
 ## `paged(build, options?)`
 
