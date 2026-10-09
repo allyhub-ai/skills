@@ -263,7 +263,7 @@ export const register: Register = (on) => {
               <Text bold>{item.title}</Text>
               <Text dimColor>
                 {item.kind === "video" ? "Video" : "Slides"} ·{" "}
-                {String(item.variants.length)} version(s)
+                {String(item.combos.length * item.formats.length)} version(s)
               </Text>
               {item.errors ? (
                 <Text color="error">{String(item.errors)} must-fix problem(s)</Text>

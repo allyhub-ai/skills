@@ -1,6 +1,6 @@
 # AllyHub skills
 
-Product demo videos from a few sentences, made by your coding agent.
+Talking-head shorts, ad batches and product demos, made by your coding agent.
 
 This repository holds the AllyHub skill and the Claude Code and Codex plugins that install it. The skill teaches your agent to use the AllyHub CLI (`npx allyhub`), which previews, checks and renders videos and decks on your computer.
 
@@ -12,6 +12,8 @@ Then ask your agent. In Claude Code:
 
 ```text
 /allyhub make a 45-second demo of https://your-product.com
+/allyhub cut my recording ~/Videos/take.mov into a 45-second TikTok with captions
+/allyhub make 6 ad variants from these hooks and demos
 ```
 
 In Codex:
@@ -37,7 +39,7 @@ Codex users can also install it from the `.codex-plugin` package in this reposit
 
 ## What you need
 
-Node.js 22.19 or newer. The CLI downloads headless Chrome the first time it needs it; rendering MP4s also needs ffmpeg, and your agent tells you how to get it if it is missing.
+Node.js 22.19 or newer. The CLI downloads headless Chrome the first time it needs it; rendering MP4s also needs ffmpeg, and your agent tells you how to get it if it is missing. Working with recordings uses local models, downloaded the first time they are needed and run on your computer: speech recognition (about 700 MB) and face tracking and person mattes (about 270 MB).
 
 ## License
 

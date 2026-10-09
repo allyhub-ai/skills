@@ -6,7 +6,10 @@ export type AllyhubItem = {
   output: string;
   kind: "video" | "paged";
   title: string;
-  variants: string[];
+  /** Combo keys (`lang=en`, or `default`); every combo renders in each format. */
+  combos: string[];
+  /** Formats the output renders as (`9x16`, `tiktok`…). */
+  formats: string[];
   /** The editor page for this item. */
   url: string;
   errors: number;
@@ -17,8 +20,10 @@ export type AllyhubExport = {
   id: string;
   piece: string;
   output: string;
-  variants: string[];
+  combos: string[];
   formats: string[];
+  /** File types (`mp4`, `pdf`…). */
+  types: string[];
   state: "queued" | "running" | "done" | "failed" | "cancelled";
   progress: number;
   files?: string[];
@@ -40,6 +45,8 @@ export type AllyhubStatus = {
     warnings: number;
   };
   problems: number;
+  /** Measurements for the agent to judge (`allyhub inspect`); never problems. */
+  facts?: { count: number; kinds: Record<string, number>; read: string };
   exports: AllyhubExport[];
   focus?: { rev: number; piece: string; output?: string; part?: string; file: string };
   /** The workspace folder it was found in. */
