@@ -27,7 +27,9 @@ app/decks/pitch.ts              a deck
 app/components/title-card.ts    a starter component, copied in with allyhub add: the workspace's own code
 app/components/stat-badge.ts    a component of your own
 media/logo.svg
-media/gen/say/<hash>.mp3        speech made by allyhub voice generate, with its .words.json
+media/gen/say/<hash>.mp3        speech made by allyhub voice generate, with its .words.json and .gen.json
+pool/hooks/shock-1.mp4          a clip a cloud tool generated (allyhub tools call … --name)
+pool/hooks/shock-1.mp4.gen.json its record: the tool, the input, the credits, when; it moves with the file
 data/completion.csv             data, read in at build time
 ```
 
@@ -115,6 +117,8 @@ A platform profile is a frame with what the platform asks of it: the area its in
 
 The mp4 encode is AllyHub's choice for an upload, well under each platform's file limits: the platform encodes what it receives again, so more bits make a bigger file, not a better video. `allyhub render --crf` and `--max-bitrate` (0: no cap) change it.
 
+The cap is a ceiling that changes nothing it need not. Each part is encoded at the crf first; its frames are then counted against the cap the way a player's buffer is (a buffer of two seconds of the cap, nine tenths full at the start), and only a part that overruns it is encoded again with the encoder holding the cap. So a video under its cap is byte for byte the one `--max-bitrate 0` gives, and a render is the same bytes every time, capped or not (mp4, mov and webm). The second encode runs on one thread (x264 and x265 hold a cap differently from run to run on several) at x264's `faster` preset (x265: `medium`), within about a tenth of a dB of `medium` at the same size: a part that overruns its cap takes about 1.5 to 3 times as long, more the longer it is. `allyhub render --json` with `ALLYHUB_RENDER_TIMINGS=1` marks such parts (`timings.part[].held`). Grainy footage is what overruns a cap; a higher `--crf`, a higher `--max-bitrate` or none avoids the second encode.
+
 A video longer than its profile takes reports AK-F001 (an output's own `maxDuration` at or under it reports AK-X006 instead); text in a profile's covered area is a `text-covered` fact (`allyhub inspect`), as for the presets.
 
 An entry of `formats` (or a paged output's `format`) can change a format's numbers: `{ format: "tiktok", safe: { bottom: 520 }, maxDuration: 60, loudness: -16 }`. `safe` (`{ top?, bottom?, left?, right? }`, whole pixels, any format) changes `ctx.dims.safe` and the `text-covered` fact; `maxDuration` (seconds, the AK-F001 limit) and `loudness` (LUFS, the master's default) are for platform profiles. The name stays the format's own (combos, file names, `--format`), so a format is listed once. `defaults.formats` in `allyhub.config.ts` takes names only.
@@ -161,11 +165,11 @@ matrix: {
 | `rules`      | `{ if?, require?, exclude? }` over slots, dimensions and `structure`; a value is a name, `#tag`, or a list of either. When every `if` holds, every `require` must hold and no `exclude` may. A slot missing from a combo's structure never matches |
 | `combos`     | The combos to make, chosen by you: `[{ hook: "price", demo: "inbox", cta: "sale" }, { structure: "short", hook: "question", cta: "trial" }]`, one candidate per slot of the combo's structure (and `structure` when the piece declares structures). Each is checked against the slots (AK-X001), the `rules` (AK-X002) and `differ` (AK-X004; the same combo twice too). Nothing is sampled: `pick` and `seed` cannot go with it. Ids follow the order given |
 
-You may pick the combos yourself with `combos`; without it, the matrix samples `pick` of them (a tool: it says why it chose each, and `allyhub mix --json` says `choice: "sampling"` or `"combos"`). The sampling covers every candidate at least once when it can, then spreads use evenly, prefers pairings not made yet and combos far from the ones chosen. Each chosen combination has an id, `c01`, `c02`… (`c01-zh-cn` when the dimensions have several values), crossed in full with the dimensions. `allyhub mix` prints the slots, the rules, the chosen combos with why each was chosen, and the render cost; `allyhub batch manifest` writes a CSV row per ad (id, key, structure, picks, length, file, `<piece>_<combo id>_<format>` name, AI flags).
+You may pick the combos yourself with `combos`; without it, the matrix samples `pick` of them (a tool: it says why it chose each, and `allyhub mix --json` says `choice: "sampling"` or `"combos"`). The sampling covers every candidate at least once when it can, then spreads use evenly, prefers pairings not made yet and combos far from the ones chosen. Each chosen combination has an id, `c01`, `c02`… (`c01-zh-cn` when the dimensions have several values), crossed in full with the dimensions. `allyhub mix` prints the slots, the rules, the chosen combos with why each was chosen, and the render cost; `allyhub batch manifest` writes a CSV row per ad (id, key, structure, picks, length, file, `<piece>_<combo id>_<format>` name, and `ai_generated` with `ai_media`: the media it uses that have a `.gen.json` record).
 
 The output's function reads `ctx.combo.<slot>` (the candidate's name) and returns that combo's parts; `ctx.pool("demo")` is the file a pool slot picked, for `footage()`. A part whose `key` is a slot's name fills that slot (or say `slot: "hook"`).
 
-**Each part renders once.** A render keeps every part's encoded segment, named by what draws it, and reuses it in every combo that has the same part; the sound is mixed for each whole combo. So a part must draw only from its own props, time and words: a layer that reads another slot's pick from its `ctx.combo` is a must-fix (AK-X005); choose in the output's function and pass the result as a prop. Parts join with hard cuts. `custom()` layers are reused only within the same combo; components are reused across combos. The check loads only the combos that between them hold every candidate, and checks every combo as a whole from its parts: `video(…, { maxDuration })` (AK-X006), and measures as facts the speech's loudness either side of each join and the music's length against the combo's.
+**Each part renders once.** A render keeps every part's encoded segment, named by what draws it, and reuses it in every combo that has the same part; the sound is mixed for each whole combo. So a part must draw only from its own props, time and words: a layer that reads another slot's pick from its `ctx.combo` is a must-fix (AK-X005); choose in the output's function and pass the result as a prop. Parts join with cuts unless a part asks for a [transition](#transitions-between-parts): a transition declared on a slot's part applies in every combo that has it, its window is rendered once per pair of parts (a hook followed by a demo), and the parts themselves are still rendered once. `custom()` layers are reused only within the same combo; components are reused across combos. The check loads only the combos that between them hold every candidate, and checks every combo as a whole from its parts: `video(…, { maxDuration })` (AK-X006), and measures as facts the speech's loudness either side of each join and the music's length against the combo's.
 
 Rules of the matrix: AK-X001 a slot, structure, rule, pool or combo that names nothing, or a combo that lacks a slot of its structure; AK-X002 the rules leave no combination, or rule out a combo `combos` names; AK-X004 two chosen combos are the same, or more alike than `differ` allows.
 
@@ -286,13 +290,13 @@ paged(({ s }) => [part({ key: "summary", still: 0, layers: [custom({ mount, rend
 | `srt`, `vtt`, `cover` | Captions (when parts speak) and the cover image              |
 
 - A render draws in two planes: ffmpeg draws the look's background and every footage layer straight from its file (placed, cropped, timed and sped as the layer says), and the browser draws only the graphic layers, over it. Each part is drawn and encoded on its own and the parts are joined; moments where no graphic layer shows, and parts without any, cost no browser time, so footage-heavy videos render fastest.
-- `--crf <0–63>` sets the quality (lower is better; default 18 for H.264, 20 for H.265, 30 for VP9; 20 in a platform profile's format), `--max-bitrate <kbit/s>` caps an mp4's video bitrate (a platform profile's format has its own cap, see Formats; 0 for none), `--chroma 444` keeps sharp colored edges, `--bits 10` keeps smooth gradients; `--audio-bitrate <kbit/s>` sets the sound's bitrate (AAC in mp4, default 192; Opus in webm, default 160; mov keeps PCM); `--workers <n>` sets how many pages draw the graphic layers at once.
+- `--crf <0–63>` sets the quality (lower is better; default 18 for H.264, 20 for H.265, 30 for VP9; 20 in a platform profile's format), `--max-bitrate <kbit/s>` caps an mp4's video bitrate (a platform profile's format has its own cap, see Formats; 0 for none), `--chroma 444` keeps sharp colored edges, `--bits 10` keeps smooth gradients; `--audio-bitrate <kbit/s>` sets the sound's bitrate (AAC in mp4, default 192; Opus in webm, default 160; mov keeps PCM); `--workers <n>` sets how many pages draw the graphic layers at once (a video renders several parts at once, and they share these pages).
 - `--gpu` (or `ALLYHUB_GPU=1`) draws on the GPU: WebGL, Three.js and shaders run on the graphics card instead of in software. `allyhub check --gpu` checks the same way; a frame must still be the same at the same moment (AK-D002).
 - `allyhub still`, `allyhub sheet`, `allyhub frames` and **Final look** in `allyhub dev` (while paused) draw a moment the way the render does: footage and graphics together, with motion blur, `post` and transparency (`--raw` leaves out motion blur, `post` and the LUT). The check looks at the graphic layers as the page draws them, over the background.
 - `allyhub frames --at s,s --overlay` (with `--from-render` too) draws the measurements over each frame: every face box of the footage showing, with its id (solid: the face the layer follows), the person matte's outline, the format's covered areas and the text boxes of the layers at that moment, labelled with their layer, and a legend under the grid; what the media index lacks is named instead of drawn. `--json` has every box per tile (`overlay`). A view: it places nothing.
 - Captions (`srt`, `vtt`) come from each voiced part's words: the text is the line it says (`saying`, `say`) when it has one, else the take's own words. A cue is one line of at most 42 characters (`--caption-max-chars`; 16 in Chinese, Japanese and Korean, `--caption-max-chars-cjk`), lasting 0.8 to 6 s (`--caption-min`, `--caption-max`) and ending 2 frames before the next (`--caption-gap-frames`).
 - Files go to `.allyhub/renders/<piece>/<output>.<combo key>.<format>.<ext>` (`<output>.<combo id>.<format>.<ext>` when the piece has slots, `<output>.<format>.<ext>` when it has no dimensions).
-- Rendered parts are kept in `.allyhub/cache/parts/` (the least recently used go past 4 GB, `ALLYHUB_PART_CACHE_MB`): a part that did not change, in this combo or another, is not drawn or encoded again.
+- Rendered parts are kept in `.allyhub/cache/parts/` (the least recently used go past 4 GB, `ALLYHUB_PART_CACHE_MB`): a part that did not change, in this combo or another, is not drawn or encoded again. A transition's window is kept the same way, per pair of parts; adding, changing or removing a transition renders its window and the part that comes in, never the part before it. `allyhub render --json` counts both: `parts` and `junctions`, each `{ total, cached }`.
 - `allyhub doctor` lists the file types this computer's ffmpeg can make.
 
 ## Formats, languages and fonts
@@ -403,10 +407,42 @@ import demo from "./media/demo.mp4"; // → { path, sha256, kind: "video", width
 - Paths are relative to the importing file and cannot leave the workspace.
 - Images, audio, video and fonts become a media value: `path` (the path in the workspace), `sha256`, `kind` (`image`, `audio`, `video`, `font`), `width`, `height` (images and video), `duration` (audio and video), `audio` (video: whether it has sound), `url`. `url` is valid only at runtime; do not concatenate or rewrite it.
 - When an audio or video file has a `.words.json` of the same name next to it (`[{ "w", "start", "end" }]`, seconds; `allyhub transcribe <file>` writes it for a recording, on this computer, with each word's `confidence`, 0 to 1: the lowest probability Parakeet gave any of its letter tokens), the value carries `words`: that makes it a take. A take also carries what the build measured of its sound (kept in the media index): `speechDb`, the median level of its words in dBFS, and `sounds`, the stretches heard between words (`{ start, end, peak, mean, voiced, after }`: seconds of the file, peak and mean level in dB against the speech, the share of voiced frames from 0 to 1, the index of the word before). When an image has an `.elements.json` of the same name next to it (element name → `[x, y, w, h]`), the value carries `elements`: a web page screenshot, used by `siteStep`.
+- When a media file has a record beside it, `<file>.gen.json` (see [Generated media](#generated-media-and-its-record)), the value carries `gen`: `{ record, ai, tool?, vendor?, model?, at?, credits?, input?, output?, sha256?, matches? }`.
 - CSV becomes an array of objects, with the header row as keys; a column that is all numbers becomes numbers. YAML becomes JSON; JSON imports as usual.
 - For a dynamic path (a different image per combo) use `ctx.asset("./media/" + name + ".png")`; when it is not found, AK-A001 is recorded.
-- For data at a dynamic path use `ctx.data("./data/" + region + ".csv")`: it returns the parsed content (`unknown`; add the type yourself), is recorded as a read, and goes into the digest. When it is not found, AK-A001 is recorded; when it cannot be parsed, AK-R001. `package.json`, `tsconfig*.json`, lock files, `messages/`, `*.words.json`, `*.elements.json` and folders that start with a dot do not count as data.
+- For data at a dynamic path use `ctx.data("./data/" + region + ".csv")`: it returns the parsed content (`unknown`; add the type yourself), is recorded as a read, and goes into the digest. When it is not found, AK-A001 is recorded; when it cannot be parsed, AK-R001. `package.json`, `tsconfig*.json`, lock files, `messages/`, `*.words.json`, `*.elements.json`, `*.gen.json` and folders that start with a dot do not count as data.
 - Types: when the workspace has a `tsconfig.json` (only for an editor's type checking; AllyHub does not need it), add `"@allyhub/sdk/client"` to `compilerOptions.types`.
+
+### Generated media and its record
+
+Every file a cloud tool call downloads (`allyhub tools call`, `allyhub tools wait`, `allyhub voice generate`, the MCP `cloud_tools_call`) gets a record beside it, `<file>.gen.json`, written by the call that made it:
+
+```json
+{
+  "schema": 1,
+  "ai": true,
+  "tool": "tts-elevenlabs-multilingual-v2",
+  "vendor": "elevenlabs",
+  "input": { "text": "Stop scrolling.", "voiceId": "…" },
+  "inputHash": "…",
+  "output": {
+    "durationSeconds": 1.4,
+    "words": { "omitted": "large", "sha256": "…", "bytes": 2310 },
+    "allyFilePath": "ally://…"
+  },
+  "credits": 0.4,
+  "at": "2026-10-09T10:00:00.000Z",
+  "sha256": "…",
+  "bytes": 23110
+}
+```
+
+- `vendor` is the catalog's category unless it names a vendor; `model` is there when the catalog, the output or the input names one. `input` is what was sent, with secrets (fields named like a key, token or password) redacted and inline base64 of 1024 characters or more replaced by the hash and size of its bytes; `inputHash` is the sha256 of the tool's name and the whole input. `output` is what the tool returned, a value whose JSON is longer than 2000 characters replaced by its hash and size (`omitted: "large"`). `sha256` and `bytes` are the file's.
+- **The record belongs to its file: when you move or rename the media, move its `.gen.json` with it.** A record whose `sha256` is not the file's (moved alone, or the file changed) is the `gen-mismatch` fact and `gen.matches: false`, never an error; one that cannot be read is the same fact (`why: "unreadable"`) and the file has no `gen`.
+- `ai` is true for everything a tool call downloads. Set it to `false` by hand where the tool fetched the file rather than generated it (a stock clip): such a file is not listed as generated. For media generated outside AllyHub, write the record yourself: `{ "schema": 1, "ai": true, "tool": "…" }` is enough.
+- `allyhub tools call <tool> --input '{…}' --name pool/hooks/shock-1.mp4` places the result at that path (without an extension it takes the result's) instead of `--out <folder>` (default `.allyhub/tools/<tool>/`). With `--name`, the same tool with the same input again calls nothing and charges nothing, and says so (`kept`); `--force` calls anyway. A file there made from another input, or without a record, is not replaced without `--force` (exit 3): `--force` makes it again over the old one, charged again (`replaced`).
+- `allyhub tools price <tool>` takes `--input` several times, or an `--input-file` holding a JSON array or one JSON object per line, and prints each call's estimate and the total (`--json`: `calls`, `credits`, `estimated`), so a batch of clips is quoted at once.
+- Where generated media goes: `allyhub timeline --json` lists `generated` (`{ file, parts, gen }`), `allyhub inspect --kind generated-media` says per output × combo × format which generated files it shows or plays and when, and `allyhub batch manifest` has `ai_generated` and `ai_media` per ad. Whether an ad needs a platform's AI label is yours and the person's to decide; AllyHub only reports.
 
 ## Parts `part`
 
@@ -433,9 +469,40 @@ part({ key: "pricing", dur: 3, layers: [priceCard({ … })] });
 | `still`  | The still moment (cover, sheet, a page): a word reference, seconds from the part's start, or `(dur) => seconds`; default 0.4 s before the part ends          |
 | `slot`   | The slot this part fills (default: its key, when that is a slot's name)                                                                                     |
 | `tags`   | Labels, plain strings                                                                                                                                       |
+| `transition` | How the part comes in from the part before it: a type's name or `{ type, dur?, ease?, split?, … }`, see [Transitions](#transitions-between-parts). Without it, a cut |
 | `overlap` | `{ before?, after? }`, seconds: J and L cuts. `before` seconds of the part's speech play under the previous part's picture, `after` seconds under the next one's; the part's picture is that much shorter at that end (at most its lead or tail and half its speech). `ctx.captions()` gives the words heard under a neighbour's picture there, so a part shared by several combos (slots) is drawn once per neighbour |
 
 A part is named in the preview's timeline by the first text it shows at its still.
+
+### Transitions between parts
+
+Parts join with cuts. A part comes in with a transition only when it says so:
+
+```ts
+part({ key: "demo", transition: "fade", layers: [ … ] });
+part({ key: "cta", transition: { type: "push", direction: "up", dur: 0.5 }, layers: [ … ] });
+```
+
+| Type | What happens to the two pictures | Its own options |
+| --- | --- | --- |
+| `fade` | A crossfade | |
+| `dip` | The part before fades to a colour, this part fades in from it | `color`: any CSS colour (`"#000"`, `"var(--ak-color-accent)"`); default the look's background |
+| `slide` | This part travels in over the part before, which stays | `direction`: `left` (default), `right`, `up`, `down`: the way it travels |
+| `push` | This part pushes the part before out, both travelling | `direction` |
+| `wipe` | An edge travels across and uncovers this part; neither picture moves | `direction` |
+| `zoom` | The part before grows to `scale` while this part fades in over it, settling from `from` to its size | `scale` (over 1, up to 4; default 1.2), `from` (0.1 to 4; default the same as `scale`, so both always fill the frame; under 1 it grows in instead, the part before showing round it) |
+| `custom` | The channels given directly | `out`, `in`: `{ x, y, scale, opacity, clip: { left, right, top, bottom } }` for the part before and this part; `color: { value?, opacity }` for a colour between them |
+
+Every type takes `dur` (seconds, over 0 and up to 10; default 0.4), `ease` (`linear`, `in`, `out`, `in-out`; default `linear` for fade, dip and custom, `in-out` for slide, push, wipe and zoom) and `split` (0 to 1, default 0.5). A value that is not one of these throws when the part is made.
+
+- **Timing.** Parts keep their lengths and their places; the video is no shorter. The transition's window lies across the join: `split` of it before this part's start, the rest after, on the frame grid. With the default, a 0.4 s window is the last 0.2 s of the part before (its tail) and this part's first 0.2 s (its lead). `split: 1` puts all of it before the join (this part's own time starts when the transition is over), `split: 0` all of it after. A window takes at most half of either part, so a short part shortens it; `allyhub timeline` prints each window as it is.
+- **What shows outside a part's own time.** Through the window the part before is past its end and this part is not at its start yet. Graphics hold: the part before shows its last frame, this part its first, until its own time runs. Footage runs on in its file: a layer showing at the part's last frame keeps playing after it, and one showing at this part's first frame starts earlier in its file (before a cut take's first stretch, as far as the file goes); where the file has no more, a frame holds.
+- **The whole picture transitions.** Each part's picture is its footage and its graphics together, over the look's background; the two pictures are put together, this part's over the part before. So a part's text travels with its footage. In a `transparent` video there is no background, and a fade or a zoom is a true dissolve (the two pictures are added, weighted), so the alpha stays right where only one of them has something.
+- **Progress.** A window of N frames shows N steps evenly spaced between the two parts: the frame before it is the part before alone, the frame after it this part alone, and a fade's middle frame is the average of the two.
+- **Sound is not changed.** Speech, music and effects play as they would across a cut; place a sound on the join with `sounds: [{ at: 0, sound: "whoosh" }]` if you want one. J and L cuts (`overlap`) work with a transition: the picture transitions where the pictures join.
+- **Custom.** Each channel is a number (it holds), `[from, to]`, or keys `[{ p, v }]` over the progress `p` (0 to 1, in order; linear between keys, after `ease`). `x` and `y` move the picture by a share of the frame's width and height (−4 to 4; `x: [1, 0]` comes from the right); `scale` is about the frame's centre (0.01 to 8); `opacity` 0 to 1; `clip` cuts a share off an edge (0 to 1). Channels not given rest (0, or 1 for scale and opacity). Example: `{ type: "custom", dur: 0.6, ease: "out", out: { x: [0, -0.3], opacity: [1, 0] }, in: { x: [1, 0] } }`.
+- The first part's transition is ignored (nothing comes before it), and so is a page's in a paged output. A part's default `still` stays clear of its windows.
+- **Looking at one.** The preview plays transitions as the render draws them (CSS on the two parts, from the same numbers). `allyhub still`, `sheet` and `frames --at` draw a moment inside a window as the render does; `allyhub frames --cuts` shows each join's window: the frame before it, five frames across it and the frame after. Layout facts (`allyhub inspect`) measure each part where it rests, not mid-transition; a `flat-frames` run inside a window (a dip is flat on purpose) carries `transition: { type, from, to }`.
 
 ## Speech `take` and `say`
 
@@ -450,14 +517,19 @@ Every part's speech has words: that is what times the part, places its layers, d
     {
       "remove": [{ "from": 167, "to": 189, "text": "Now second, figure out…" }],
       "sounds": [{ "from": 61.17, "to": 61.4 }],
+      "inWord": [{ "from": 12.31, "to": 12.62 }],
       "maxPause": 0.35,
       "pad": { "before": 0.12, "after": 0.08 }
     }
     ```
-    It removes exactly what it lists, nothing else: which words are fillers, retakes or false starts is yours to decide. `remove` lists word indices into the take's words file (inclusive) with their text: when the words file is made again, a range is found again by its text; one the take no longer says reports AK-T005. `sounds` lists stretches of the file (seconds) heard between words where no word was recognised (an "um" the recognizer left out, a hum before a restart): `allyhub transcript` shows them; a stretch is cut only between two kept words, and never into a word. `maxPause` shortens every pause between kept words longer than it, in seconds. `pad` is how much silence a cut keeps beside the words: `before` the cut, after the last kept word (default 0.12 s), and `after` it, before the next kept word (default 0.08 s), each 0 to 2 s; never past half the silence, so never into a neighbouring word (`maxPause` caps it at half the pause). The rest is mechanics: the cut lands at the quietest 10 ms within 40 ms, on the film's frame grid, with 10 ms fades. `allyhub edits` prints the padding it used.
-  - **`.roomTone(false | { from, to })`**: a part's lead and tail play the take's own room (its silence around the words), and where that runs out its room tone: by default the quietest steady stretch the build measured; `{ from, to }` (seconds of the file) loops the stretch you pick, `false` leaves digital silence.
+    It removes exactly what it lists, nothing else: which words are fillers, retakes or false starts is yours to decide. `remove` lists word indices into the take's words file (inclusive) with their text: when the words file is made again, a range is found again by its text; one the take no longer says reports AK-T005. `sounds` lists stretches of the file (seconds) heard between words where no word was recognised (an "um" the recognizer left out, a hum before a restart): `allyhub transcript` shows them; a stretch is cut only between two kept words, and never into a word. `inWord` lists stretches of the file to cut even inside a kept word: a sound said with no silence before or after it is inside its neighbour's time for the recognizer ("so-um" is all "so"), where `sounds` never reaches. An `inWord` stretch is cut as listed, each end moved only to the quietest 10 ms within 40 ms, with the same 10 ms fades; the word stays, shorter, and one that reaches the first or last word of a part's stretch moves that end of the stretch. Nothing finds these for you: `allyhub transcript` measures every word from inside (below), `allyhub transcribe <take> --from <s> --to <s>` hears a stretch again, and `allyhub edits` shows each one as placed, with the word it cuts into and the join measured inside the word (the preview's Transcript sheet neither shows nor changes them). `maxPause` shortens every pause between kept words longer than it, in seconds. `pad` is how much silence a cut keeps beside the words: `before` the cut, after the last kept word (default 0.12 s), and `after` it, before the next kept word (default 0.08 s), each 0 to 2 s; never past half the silence, so never into a neighbouring word (`maxPause` caps it at half the pause). The rest is mechanics: the cut lands at the quietest 10 ms within 40 ms, on the film's frame grid, with 10 ms fades. `allyhub edits` prints the padding it used.
+  - **`.roomTone(false | { from?, to?, match?, gainDb?, limitDb?, fade? })`**: a part's lead and tail play the take's own room (its silence around the words), and where that runs out its room tone: by default the quietest steady stretch the build measured; `{ from, to }` (seconds of the file) loops the stretch you pick, `false` leaves digital silence.
+    - **Its level is matched, so the noise floor does not step at the join.** A fill plays at the level of the take's own room beside the join it meets: the gain is that room's floor minus the fill's, each the mean power of the quietest quarter of the 10 ms frames within 0.3 s of the join (the take's level frames, measured at 16 kHz), at most `limitDb` dB either way (default 6: a breath or a word's tail read as the floor must not turn the fill into a burst of noise). `match: false` plays it as recorded; `gainDb` (−60 to 24) sets its gain yourself.
+    - **It cross-fades with the take** over `fade` seconds (default 0.04, equal-power, inside the take's own room and never into a word); one loop of the stretch into the next and the fills of two parts in a row cross-fade the same way. `fade: 0` butts it against the take with the mix's 10 ms fades.
+    - **A missing level stays missing**: where the take keeps under 0.1 s of its own room at a join (a neighbouring word right there), there is no floor to measure and the fill plays as recorded.
+    - `allyhub timeline` prints every fill with its numbers: `room tone, lead: 3.20 – 3.56 from 41.30 s of the file at +3.2 dB (matched; the fill's floor −58.4 dBFS, the take's over the 0.14 s of its own room at the join −55.2 dBFS; cross-fade 0.040 s)`. `--json` has them as `timeline.audio.room[]`, each `{ file, at, from, dur, gainDb?, fadeIn?, fadeOut?, tone }` with `tone` `{ part, side: lead | tail, join, pad, level, floor, gainDb, from: matched | given | off | unmeasured, limited?, fade }`. `allyhub edits` prints the take's room tone stretch, its floor, and the floor at each end of what an edits file keeps.
   - **`.denoise(db?)`**: reduces the noise in its sound by `db` (default 12) with ffmpeg's FFT denoiser, in the render and in the preview (which makes the denoised sound once, into `.allyhub/cache/denoise/`, and plays the take as recorded until it is made).
-- **`say(text, { voice?, tool?, params? })`**: text to speech. `allyhub voice generate` makes the file, `media/gen/say/<hash>.<ext>` with its words; the hash covers the text read aloud, the voice, the tool and the params, so a changed line needs a new file. `params` is extra input for the voice tool (plain JSON; see `allyhub tools describe <tool>` for what it takes; not `text` or `voiceId`): it is sent with the text and voice, and the server checks it against the tool's schema. A `say` without its file reports AK-T002; until then the part lasts about as long as the line would take. The tool defaults to `tts-elevenlabs-multilingual-v2`; `allyhub voice generate --quote` prices the missing files first (it is billed by character, so tell the person the price before you run it).
+- **`say(text, { voice?, tool?, params? })`**: text to speech. `allyhub voice generate` makes the file, `media/gen/say/<hash>.<ext>` with its words and its record (`.gen.json`); the hash covers the text read aloud, the voice, the tool and the params, so a changed line needs a new file. `params` is extra input for the voice tool (plain JSON; see `allyhub tools describe <tool>` for what it takes; not `text` or `voiceId`): it is sent with the text and voice, and the server checks it against the tool's schema. A `say` without its file reports AK-T002; until then the part lasts about as long as the line would take. The tool defaults to `tts-elevenlabs-multilingual-v2`; `allyhub voice generate --quote` prices the missing files first (it is billed by character, so tell the person the price before you run it).
 
 ## Word references
 
@@ -507,9 +579,89 @@ footage(screen, { crop: [0, 0, 0.5, 1], speed: 2 }); // the left half of the pic
 | `punchIn` | Words to zoom in on: `["insane", "free@1.15"]` (a decimal after `@` is the scale, default 1.12; `"free@2"` is still the second "free") or `{ at, until?, scale?, in?, out?, ease?, center? }`. Eased in over `in` seconds (0.2; up to 30) centred on the word's start, held for the word (or until `until`), eased out over `out` (0.25; up to 30), with `ease` (`"in-out"`): a slow push is `{ at: 4, in: 8, until: 8, scale: 1.07, ease: "linear" }`; about `center` (`{ x, y }`, fractions of the box), by default the speaker's face, else `{ x: 0.5, y: 0.42 }` |
 | `sharpen` | 0–1: sharpens the picture after it is scaled (0.3 is gentle), for footage drawn larger than its pixels (`allyhub inspect` gives the scale). Renders, stills and the preview's Final look only: the live preview plays it unsharpened |
 | `pullback` | `true` or `{ scale?, dur?, ease?, center? }`: the layer opens zoomed in (1.12× by default, up to 3) and eases back (`ease`, default `"out"`) to the whole picture over `dur` seconds (0.6); about `center`, by default the speaker's face. On each part's take, one locked-off camera feels cut between shots. A punch-in that starts sooner cuts it short. Not with box keyframes |
+| `background` | `{ blur?, dim?, desaturate?, color?, image?, feather?, shrink? }`: treats the picture behind the person apart from the person (below) |
 | `shape`  | `"rect"` (default) or `"circle"`: the picture shows only in the ellipse inscribed in the box (a circle when the box is square in pixels; keyframed boxes move it), the rest of the box shows what is under it. Graphic layers draw over all footage, so leave the circle's area free of them: `footage({ box: [0.58, 0.68, 0.36, 0.2025], shape: "circle", reframe: "face" })` at 9:16 |
 
+**The background behind the speaker.** `background` treats the picture behind the person apart from the person, through the file's person matte (see the media index below; any footage file, the part's take or another):
+
+```ts
+footage({ background: { blur: 24 } }); // the room out of focus
+footage({ background: { dim: 0.4, desaturate: 1 } }); // darker and gray, the speaker in colour
+footage({ background: { color: "var(--ak-color-bg)" } }); // a flat colour instead
+footage({ background: { image: "./media/studio.jpg", blur: 6 } }); // an image instead
+footage({ background: { color: "transparent" } }); // the person alone
+```
+
+| `background` | Description |
+| --- | --- |
+| `blur` | Blurs it: the Gaussian's standard deviation, as CSS `blur()`, in px at 1080p (0–200; 8 softens, 24 is well out of focus). Only the background is blurred: the person's colours do not spread into it |
+| `dim` | 0 (as it is) to 1 (black) |
+| `desaturate` | 0 (as it is) to 1 (gray) |
+| `color` | A flat colour instead of the background: any CSS colour, a look's variable too. `"transparent"` draws the person alone, over what is under the layer (the look's background, footage listed before; in a `transparent` video, nothing: mov, webm and PNG keep the alpha). Not with `blur`, `dim`, `desaturate` or `image` |
+| `image` | An image instead (PNG, JPEG or WebP; a path or an imported file), filling what shows of the picture (cover); `blur`, `dim` and `desaturate` then treat the image. It stays still under a punch-in or a reframe, which move the person |
+| `feather` | The softness of the person's edge, px at 1080p; default 2 (0–40) |
+| `shrink` | How far the person's edge is pulled in, px at 1080p; default 4 (−40 to 40; negative lets it out). A shrink over 1.5 times the feather softens the edge further |
+
+- Lengths are px at 1080p: they scale with the format's shorter side, so the same numbers look the same in every format.
+- It works with `box`, `shape`, `crop`, `reframe`, `punchIn`, `pullback`, `speed`, a cut take and box keyframes. The order is: the treated background, graphics drawn `z: "behind-person"`, the person, the graphics in front.
+- The matte is a segmentation, not a keyed edge: about 480 px on its long side, made on 10–20 frames a second and filled in between. AllyHub makes it firm first (under a quarter is background, over three quarters the person), so a place it is unsure of inside the person is not see-through, then softens the edge by `feather` and moves it by `shrink`. What it gets wrong shows as it is: a rim of the old background round loose hair (up to about 15 px at 1080p; `shrink: 6`–`8` hides most of it and thins fingers), a hand moving fast, a shoulder dropped for a frame, a thing held in the hand. A blur or a dim hides these far better than a colour or an image does: look at the frames (`allyhub frames`, `allyhub still`) around fast movement before choosing.
+- Until the file has a matte the footage shows as it is, reported as a `fallback` fact (`for: "background"`).
+- The preview draws it as it plays: CSS filters on the video for the blur, desaturation and dimming, and the person on a canvas over it with the same edge. It approximates the render in three ways: the blur is of the whole picture, so a faint glow of the person's colours shows round them; a blur fades at the frame's border; the edge is coarser. `allyhub still`, `allyhub frames` and **Final look** draw the render's.
+- It costs render time on the parts that use it. Measured on a 1080 × 1920 talking head: about a sixth more for the person alone, a quarter for a colour, a third for a dim, a desaturation or an image, and two thirds more to nearly twice as long for a blur (a 40 s part: 14 s plain, 26 s blurred).
+
 The preview plays footage in step with the rest, placed by the same numbers the render uses; the render draws the exact frame of the video for every frame, straight from the file with ffmpeg (nothing is extracted or cached). When the layer is longer than the video, the last frame holds; before a take's file starts (speech in the lead), its first frame holds. Videos with alpha (ProRes 4444, VP9 with alpha) show what is under their transparent pixels. A file that is not a video reports AK-A003; `footage()` in a part without a take of a video reports AK-A001 or AK-A003.
+
+### Two recordings of one moment: `allyhub sync`
+
+A separate microphone and a camera, or a screen recording and a webcam, start at different moments and run on different clocks. `allyhub sync <reference> <other> [more files…]` measures the offset between them from their sound (cross-correlation, to well under a millisecond). It only measures: writing the offset into the piece is yours.
+
+```
+$ allyhub sync media/mic.wav media/cam.mp4 --fps 30
+media/cam.mp4 against media/mic.wav: offset +1.500004 s (+45.00 frames at 30 fps), at 2.055 s of media/mic.wav.
+  A moment at t s of media/mic.wav is at t + 1.500004 s of media/cam.mp4.
+  Peak: 98.4 × the RMS of the correlation over every offset searched (the whole of both); the next peak more than 0.05 s away is 22.12 × lower, at offset −1.359 s; polarity the same; 4.111 s of common sound.
+  Windows (…): at 0.41 s  +1.500001 s  peak 85.0 ×  0.067 ms wide  correlation 0.851  levels −28.9 / −22.7 dBFS  +0.002 ms off the line …
+  Drift: +2.44 ppm, from 5 windows over 3.288 s (…): offset(t) = 1.499999 + 2.4371e-6 × t, t in seconds of the reference. The other file played at speed 1.00000244 keeps step with it.
+```
+
+- **`offset`** (seconds; `frames` with `--fps`): other = reference + offset. A moment at `t` s of the reference is at `t + offset` s of the other file; positive when the other file started recording earlier. It holds at `at`, the middle of the sound the two share.
+- **How far to trust it** is numbers, never a verdict; unrelated recordings get an offset too.
+  - `peak.confidence`: the peak's height over the RMS of the correlation over every offset searched. `peak.from` says what was correlated: the whole of both files, or a 30 s probe of the shorter one (a drifting pair smears the whole-file peak); `peak.inverted`: one recording has its polarity flipped.
+  - `second`: the next-highest peak more than 0.05 s away, its `offset` and how many times lower it is (`ratio`): another place the sounds also match (music, a hum, a repeated line).
+  - `windows`: the offset measured again on the loudest stretch of each equal share of the common sound, each with its own peak (`confidence`), the peak's `width` at half height, the plain `correlation` of the two windows there (−1 to 1), both levels in dBFS and its distance from the drift line (`residual`). A window with no sound on a side has `offset: null`.
+  - On AllyHub's tests, two recordings of the same moment measured a peak of 30 to 1600 ×, a next peak 3 to 300 × lower and window correlations of 0.4 to 1 (the lowest of each with clocks 120 to 300 ppm apart; a filtered, echoing, noisy copy of a recording measured 465 ×, 22 × and 0.6 to 0.7); unrelated recordings measured a peak of 6 to 8 ×, a next peak 1.04 to 1.06 × lower, window correlations under 0.1 and windows tenths of a second off the line.
+- **`drift`**: two devices' clocks differ by some parts per million, so the offset changes over a long take. `drift` is the line through the windows' offsets: `slope` (seconds of offset per second of the reference; `ppm`), `at0` (the offset at second 0 of the reference), so `offset(t) = at0 + slope × t`; `span` is the time between the first and last window and `residual` how far the windows lie from the line. A drift measured over a few seconds says little: 10 ppm is 0.6 ms a minute.
+- **What cannot be measured stays missing**: a silent file or one with under half a second of sound has `offset: null` and `why`; a file without a sound stream is an error.
+- **Clocks**: offsets are between the two sounds as decoded, from each sound's first sample, which is how AllyHub plays a sound and times its words. A file's picture is on the file's own clock: when its sound stream starts later there (`soundStart`, from ffprobe; not 0 in some phone and screen recordings), the picture is at `pictureOffset` = `offset + soundStart`, and the command says so.
+- Results are kept in the workspace's media index by both files' content (`--force` measures again). `--max <seconds>` limits the offsets searched; `--windows` (5), `--window` (5 s) and `--search` (0.5 s around the coarse offset) set the windows.
+
+**Using the offset.** The microphone is the part's speech and the camera is its picture:
+
+```ts
+// allyhub sync media/mic.wav media/cam.mp4  →  offset +1.500004 s
+const OFFSET = 1.500004;
+part({
+  key: "intro",
+  speech: take("./media/mic.wav").range("So here is", "every time"),
+  // `from` is the camera's moment at the layer's start: the take's moment there, plus the offset.
+  // allyhub timeline --json gives the part's start and its speech { start, from }:
+  // the take's moment at the part's start is speech.from − (speech.start − part.start).
+  layers: [footage("./media/cam.mp4", { from: 12.84 + OFFSET })],
+});
+```
+
+- A negative `from` is taken as 0: when the camera started later than the moment the layer starts at, start the layer that much later (`at`) with `from: 0`. When the command reports a `pictureOffset` other than the offset (the camera file's sound starts later on its own clock), use that for the picture.
+- **Drift**: when it matters over the part's length, take the offset at the part's moment, `drift.at0 + drift.slope × t`, and play the camera at `speed: 1 + drift.slope` (`footage(cam, { from, speed: 1.0000244 })`): the picture then keeps step with the take.
+- **A cut take** (`.edits()`): only a take's own footage follows its cuts, so make the two recordings one file first and take that: the microphone's sound on the camera's picture, moved by the offset, with ffmpeg in a script of the workspace. Transcribe the new file; `footage()` is then in sync and follows the edits.
+
+  ```bash
+  # offset ≥ 0 (the camera started earlier): delay the microphone by the offset, in milliseconds
+  ffmpeg -i cam.mp4 -i mic.wav -filter_complex "[1:a]adelay=1500.004:all=1[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 256k synced.mp4
+  # offset < 0 (the camera started later): skip that much of the microphone
+  ffmpeg -i cam.mp4 -ss 0.812 -i mic.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k synced.mp4
+  ```
+
+  `allyhub sync cam.mp4 synced.mp4` then measures 0 when the camera has sound of its own.
 
 ### Graphics: components and `custom`
 
@@ -585,7 +737,7 @@ part({
 
 ### The media index
 
-A face track and a person matte are what AllyHub learns from a video once, on this computer, and keeps in the project's media index (`.allyhub/cache/index/<sha256 of the file>/`). An output reads the face track of a take under a face reframe, under its own graphics (the `text-speaker` fact) and for `ctx.face(t)` and `ctx.faces(t)`; it reads the person matte for layers drawn `z: "behind-person"`. When one is missing, `allyhub check`, `allyhub render` and `allyhub dev` make it before going on (no cost; the first time downloads the runtime and models, about 290 MB, into `~/.allyhub/`), with progress on stderr or on the preview page, which reloads when it is done. `--no-index` (or `ALLYHUB_NO_INDEX=1`) skips that: the reframe is centred and layers behind the person draw in front, reported as a `fallback` fact. `allyhub index <video> [--faces] [--matte]` makes them by hand.
+A face track and a person matte are what AllyHub learns from a video once, on this computer, and keeps in the project's media index (`.allyhub/cache/index/<sha256 of the file>/`). An output reads the face track of a take under a face reframe, under its own graphics (the `text-speaker` fact) and for `ctx.face(t)` and `ctx.faces(t)`; it reads the person matte for layers drawn `z: "behind-person"` and for a footage layer's `background`. When one is missing, `allyhub check`, `allyhub render` and `allyhub dev` make it before going on (no cost; the first time downloads the runtime and models, about 290 MB, into `~/.allyhub/`), with progress on stderr or on the preview page, which reloads when it is done. `--no-index` (or `ALLYHUB_NO_INDEX=1`) skips that: the reframe is centred, layers behind the person draw in front and a footage layer's background is left as it is, each reported as a `fallback` fact. `allyhub index <video> [--faces] [--matte]` makes them by hand.
 
 `allyhub index`, `transcribe`, `transcript` and `edits` keep what they measure of a file in the media index of the workspace it belongs to: the nearest folder above the file with `allyhub.config.ts`, `messages/`, `app/videos/` or `app/decks/`; else the current folder's; else, by a `.allyhub/` folder alone, the current folder's, then the file's; else the current folder. They print which (`workspace` in `--json`), warn on stderr when it is not the current folder's workspace or none was found, and `--dir <workspace>` names it.
 
@@ -620,11 +772,13 @@ Text over the speaker's face box or person matte is a `text-speaker` fact. `srt`
 | `text-overlap` | `a`, `b` (blocks of two layers); `area`; `share` of the smaller box |
 | `footage-scale` | `file`, `source`, `shown` (crop or reframe window), `max` and `min`: `{ scale, t, from }`, output pixels per source pixel at its largest and smallest over the layer's window (`2` draws each source pixel 2 × 2), the first moment of each, and what makes it up then (the fit, `zoom` for a punch-in or pullback, `box key`); measured at the window's first and last frames and at every zoom and box key. The fact's `t` is the largest's |
 | `free-bands` | One per part whose footage has a face track or person matte. `frame`; `covered` (the format's covered edges); `content`: `{ x: [x0, x1], y: [y0, y1] }`, the frame inside them (no margin, unlike `ctx.content`); `profile`; `moments` (the part's measured moments); `face` (the speaker's face box: `files`, `speaker`, `seen` (moments it was seen in the content box's columns), `rows` (`[y0, y1]` it covered at any moment, joined), `bands`) and `person` (the person matte, opaque past half: the same, without `speaker`), each `{ missing: "face-track" \| "person-matte", files }` when the media index lacks it; `bands`: free of everything measured. A band is `{ y: [y0, y1], x: [x0, x1], height }` in pixels, across the content box; every band is listed, none too small. Raw rows, no placement: where text goes is yours |
-| `flat-frames` | `start`, `end`, `frames` (runs of nearly flat frames near cuts and cues, in a colour unlike the picture around them), `luma`, `shade`, `longer`, `options`: the thresholds used (`maxStd` 3, the luma spread of a flat frame out of 255; `minFrames` 4; `sameLuma` 10, how close to the picture around it a run may be and still count as that picture's background); looked for on each output's first version |
+| `flat-frames` | `start`, `end`, `frames` (runs of nearly flat frames near cuts and cues, in a colour unlike the picture around them), `luma`, `shade`, `longer`, `transition` (`{ type, from, to }` when the run lies in a transition's window, as a dip through a colour does), `options`: the thresholds used (`maxStd` 3, the luma spread of a flat frame out of 255; `minFrames` 4; `sameLuma` 10, how close to the picture around it a run may be and still count as that picture's background); looked for on each output's first version |
 | `music-length` | `file`, `music` (seconds the video can play: the file from `from` on), `from`, `loop`, `video`, `without` (seconds at the end without music; 0 when it loops), `estimated` |
 | `join-loudness` | `before`, `after` (part keys), `beforeLufs`, `afterLufs` (levelled as the mix levels them), `difference` in LU; pieces with slots. Not measured: `missing` (`ffmpeg`, `file`, `silent`, `failed`) and `why` in place of the numbers |
 | `matrix-coverage` | `choice` (`sampling` or `combos`), `pick`, `possible` (absent when not counted), `chosen`, `candidates`: `{ slot, candidate, combos }` (ids of the chosen combos using it); one per piece with slots |
-| `fallback` | `file`, `missing` (`face-track`; `face`, with its id in `face`; `person-matte`; `own-footage`; `tempo`), `for` (`reframe`, `speaker`, `behind-person`, `snap`), `fallback` (`centred`, `in-front`, `not-snapped`) |
+| `generated-media` | One per output × combo × format that uses a generated file (one with a `.gen.json` record whose `ai` is not false). `files`: `{ file, kind, tool?, vendor?, model?, at?, mismatch?, uses, seconds? }`; `uses`: `{ part?, as, start?, end? }` in film seconds, `as` one of `footage` (a footage layer's window), `speech` (the part says it: a `say` file is a generated voice), `music` (the output's music, for as long as it plays), `sound` (a placed sound effect, for its file's length), `read` (the part's layers read its media value, an image a component shows: the part's window at most; without a part or times when the output's function read it); `seconds`: film seconds it shows or plays, overlaps counted once; `duration` (the video's); `estimated`. A paged output's has `uses` by page, without times |
+| `gen-mismatch` | One per piece and file it reads. `file`, `record`, and `why`: `sha256` with `recorded` and `actual` (the record is another file's, or the file changed), or `unreadable` with `error` |
+| `fallback` | `file`, `missing` (`face-track`; `face`, with its id in `face`; `person-matte`; `own-footage`; `tempo`), `for` (`reframe`, `speaker`, `behind-person`, `background`, `snap`), `fallback` (`centred`, `in-front`, `unprocessed`, `not-snapped`) |
 
 The preview page's Measurements button draws the text facts over the picture at the moment on show.
 
@@ -831,27 +985,47 @@ The same files, the same combo and format and the same moment always give the sa
 
 ## References: `allyhub reference` and `allyhub compare`
 
-`allyhub reference <file or URL> [--out reference/<id>]` analyses a reference video on this computer (a URL is downloaded with yt-dlp, installed on first use) and writes into `reference/<id>/`: `video.mp4`, `video.words.json` (its words, the format a take reads), `sheet-01.png`… and `reference.json`. Speech is heard with Parakeet (`--lang`), text on screen read with OCR (Tesseract, about 20 MB on first use; `--no-ocr` skips it; a word counts from confidence `--ocr-confidence` 60, a word of three characters or fewer from `--ocr-short` 80), cuts found by frame difference (`--threshold` 0.3 for a cut; `--min-shot` 0.25 s between cuts, `--weak-floor` 0.12 and `--prominence` 1.8 for weak candidates). `--all` keeps everything those thresholds leave out: every candidate peak with its score, and the low-confidence words, marked. Every analysis is cached by the file's content hash in `.allyhub/cache/index/` (`--fresh` redoes them). `--understand` also sends the video and the local measurements to Gemini (`GEMINI_API_KEY`; the newest Gemini model the key can use, or `--model`): its sections are moved to the nearest local cut or pause, and the word times stay local.
+`allyhub reference <file or URL> [--out reference/<id>]` measures a reference video on this computer (a URL is downloaded with yt-dlp, installed on first use) and writes into `reference/<id>/`: `video.mp4`, `video.words.json` (its words, the format a take reads), `sheet-01.png`… and `reference.json`. It measures and concludes nothing: what a stretch is for, what the picture is, which text is a caption or a watermark is yours to say, in `interpretation.json` (below). Speech is heard with Parakeet (`--lang`), text on screen read with OCR (Tesseract, about 20 MB on first use; `--no-ocr` skips it; a word counts from confidence `--ocr-confidence` 60, a word of three characters or fewer from `--ocr-short` 80), cuts found by frame difference (`--threshold` 0.3 for a cut; `--min-shot` 0.25 s between cuts, `--weak-floor` 0.12 and `--prominence` 1.8 for weak candidates). `--all` keeps everything the thresholds leave out: every candidate peak with its score, the low-confidence words, every gap between words. Every analysis is cached by the file's content hash in `.allyhub/cache/index/` (`--fresh` redoes them), so running it again on the folder (`allyhub reference reference/<id>`) is quick.
 
-`reference.json` (times in seconds):
+`reference.json` (schema 2; times in seconds):
 
-| Field                                                     | What it is                                                                                                                                                                      |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema`, `id`, `source`                                  | `1`, the folder's name, and `{ file, url?, title?, sha256 }`                                                                                                                    |
-| `duration`, `width`, `height`, `fps`                      | The video                                                                                                                                                                       |
-| `words`, `wordCount`, `asr`                               | The words file beside it, how many words, the recognition model                                                                                                                 |
-| `shots`                                                   | `{ threshold, minShot, weakFloor, prominence, cuts: [{ t, score }], weak: [{ t, score }], candidates? }`: the parameters used; cuts are candidates at or above the threshold; weak ones (a cut inside one half of a split screen, an animation) are for you to judge; with `--all`, every peak `{ t, score, source, around, passes }` |
-| `ocr`                                                     | When OCR ran: `{ engine, confidence: { word, short }, low? }` (`low`, with `--all`: the words under the confidence, `{ t, text, conf, box }`) |
-| `pacing`                                                  | `cutsPerMinute`, `meanShot`, `medianShot`, `wordsPerMinute`, `speakingRate`, `timeToFirstWord`, `timeToFirstCut`, `textShare`, `speechShare`, `tempo: { bpm, confidence }`, `onsetsPerMinute` |
-| `captions`                                                | `present`, `wordsAtOnce`, `uppercase` (share), `position` (`top` … `bottom`, `varies`), `y`, `followsSpeech` (share of caption words said within a second), `observations`, `source` |
-| `persistentText`                                          | Watermarks and handles, left out of the sections                                                                                                                                |
-| `sections[]`                                              | `index`, `start`, `end`, `dur`, `role` (`hook`, `problem`, `demo`, `proof`, `offer`, `cta`, `other`), `roleConfidence`, `roleSource` (`local`, `gemini`, `agent`), `said`, `words`, `wordsPerMinute`, `onScreen`, `captions`, `shots`, `cutsPerMinute`, `textSeconds`, `visual` (`talking_head`, `screen_recording`, `b_roll`, `product`, `text_card`, `mixed`, `unknown`), `visualSource`, `notes` |
-| `understanding`                                           | With `--understand`: `{ provider, model, summary, layout, hook }`                                                                                                               |
-| `sheets`                                                  | The contact sheets beside it                                                                                                                                                    |
+| Field | What it is |
+| --- | --- |
+| `schema`, `id`, `source` | `2`, the folder's name, and `{ file, url?, title?, sha256 }` |
+| `duration`, `width`, `height`, `fps` | The video |
+| `words`, `wordCount`, `asr` | The words file beside it, how many words, the recognition model |
+| `shots` | `{ threshold, minShot, weakFloor, prominence, cuts: [{ t, score }], weak: [{ t, score }], candidates? }`: the parameters used; cuts are candidates at or above the threshold; weak ones (a cut inside one half of a split screen, an animation) are for you to judge; with `--all`, every peak `{ t, score, source, around, passes }` |
+| `speech` | `{ pause, sentences, pauses, gaps? }`. A sentence ends at a full stop, a question or exclamation mark, or a silence of `pause` seconds (`--pause`, 0.5): `{ index, start, end, words: [first, last] (indices into the words file), text, punctuation, pauseAfter? }`. `pauses`: the gaps between words of `pause` seconds or more, `{ after, start, end, dur }`; `gaps`, with `--all`: every gap |
+| `boundaries` | `{ cutWithin, candidates }`: every place a section could start. One per sentence end (on the cut beside it when a cut is within `cutWithin` seconds of the gap, `--cut-within` 0.15; else just before the next sentence) and one per other cut: `{ t, cut?: { t, score }, weak?: { t, score }, pause?: { start, end, dur }, sentence? }`. `cut` and `pause` are what was measured there; no `pause` means someone is speaking across it (or nothing is said at all) |
+| `ocr` | When OCR ran: `{ engine, confidence: { word, short }, frames, samePlace, saidWithin, low? }` (`low`, with `--all`: the words under the confidence, `{ t, text, conf, box }`) |
+| `text[]` | Every line of text read on screen, as one observation: `{ id, text, box, height, conf, words, upper, start, end, spans, seconds, seen, frames, spread, said }`. The same text read at about the same place (its centre within `samePlace` 0.05 of the frame) in several sampled frames is one line. `box` `[x, y, w, h]` and `height` are shares of the frame; `upper` the share of its letters in capitals; `spans` the stretches it stayed on screen and `seconds` their total; `seen` the sampled frames it was read in and `frames` that as a share of all of them; `spread` how much of the video its sightings span; `said` the share of its words spoken within `saidWithin` seconds (`--said-within`, 1) of a frame it was read in. No label says what a line is: `height`, `box`, `spans`, `frames`, `spread`, `upper` and `said` are what tells a caption from a screen's text from a watermark, and telling is yours |
+| `pacing` | `cutsPerMinute`, `meanShot`, `medianShot`, `wordsPerMinute`, `speakingRate`, `timeToFirstWord`, `timeToFirstCut`, `textShare` (any text read), `speechShare`, `tempo: { bpm, confidence }` (as estimated; a low confidence means there may be no beat), `onsetsPerMinute` |
+| `segments` | `{ rule, pause, cutWithin, minLength, list }`: a neutral split, mechanics only. A segment ends where a sentence ends with a pause of `pause` seconds or more after it or a cut within `cutWithin` of the gap (without speech: at every cut); segments shorter than `minLength` (`--min-segment`, 2 s) join their shorter neighbour. Each is `{ index, name (s1, s2…), sentences?, start, end, dur, said, words, wordsPerMinute, cuts, shots, cutsPerMinute, text (line ids), textSeconds }`. It says nothing of what a segment is for |
+| `sheets` | The contact sheets beside it: frames every 2 s, labelled with the time and the section's name, the words said under each |
 
-Edit it where the sheets show a guess is wrong (set `roleSource: "agent"`); `allyhub compare` reads it back. `--structure` prints a suggested structure (one slot per section, named by role: `hook`, `demo`, `demo-2`, `cta`, with durations) and the matching `part({ key, dur, layers: [] })` list.
+**The interpretation is yours.** Read `reference.json` and the sheets, then write `reference/<id>/interpretation.json` (or pass a file with `allyhub reference reference/<id> --sections <file.json>`, which checks it and writes it there):
 
-`allyhub compare <reference> [folder] --piece <id> [--output] [--combo] [--format]` compares the output's render in `.allyhub/renders/` (rendered first when there is none, or with `--render`; `--file` names another video). It measures the render the same way (the words come from its takes), takes its parts as its sections, and aligns them with the reference's in order by dynamic time warping over durations and roles: a part whose key or tags name a role (`hook-b`, `tags: ["cta"]`) matches a section of that role more readily, and one section may match several parts or the other way round. It measures the render with the reference's shot and OCR parameters, and reports first the raw differences (render − reference): per section `diff: { seconds, share, cutsPerMinute, wordsPerMinute, textSeconds }`, and for the whole video `overall.diff` (duration, pace, time to first word, text share); then, labelled as such, a summary at a tolerance: `summary: { tolerance, sections, sectionsWithin, shareWithin, meanDurationDiff }` (sections within ±10 % by default, `--tolerance 0.15`). The side-by-side sheet (`--out`, default `.allyhub/compare/…png`) puts each reference section over the parts matched to it.
+```json
+{
+  "sections": [
+    { "start": 0, "end": 5.76, "role": "hook", "picture": "presenter to camera under a title card", "onScreen": ["…"], "notes": "…" },
+    { "start": 5.76, "end": 8.77, "name": "step-open", "role": "demo", "picture": "screen recording over hands typing" }
+  ],
+  "captions": { "lines": [6, 9, 13], "style": "one word at a time, upper case, white with a dark outline, on the seam" },
+  "watermarks": [10, 15],
+  "summary": "…",
+  "layout": "…",
+  "hook": "…"
+}
+```
+
+- `sections`: in time order, without overlaps (they need not cover the whole video). `role`, `picture`, `name`, `notes` are free text in your words; a section's name is its `name`, else its `role`, as a slug (`demo`, `demo-2` when it repeats), else `s1`, `s2`….
+- `captions.lines` and `watermarks` are ids of `reference.json`'s `text`. Lines you call watermarks are left out of the text numbers in `allyhub compare`. The ids belong to that `reference.json`: write them again after changing an OCR option.
+- `schema` (1) and `source` (`"agent"`) are filled in when left out. A file that cannot hold (a section that ends before it starts or overlaps the one before, an id `text` does not have) is refused with what is wrong; `allyhub reference` run beside a broken `interpretation.json` still measures and says it was not used.
+- `allyhub reference reference/<id>` again draws the sheets with your sections' names. `--structure` prints the sections as a structure (one slot per section with its duration, what was said, and your role and picture) and the matching `part({ key, dur, layers: [] })` list: from your interpretation, else from the neutral segments, named `s1`, `s2`….
+- `--understand` also sends the video and the local measurements to Gemini (`GEMINI_API_KEY`; the newest Gemini model the key can use, or `--model`) and writes its answer as an interpretation of the same shape, marked `source: "gemini"` with `model` and `snappedWithin` (its section starts are moved to the nearest boundary candidate within 0.7 s; the word times stay local). It goes to `interpretation.json` when there is none (or only Gemini's), to `interpretation.gemini.json` when yours is there. It is a second opinion: check it against the sheets, and edit it or take from it.
+
+`allyhub compare <reference> [folder] --piece <id> [--output] [--combo] [--format]` compares the output's render in `.allyhub/renders/` (rendered first when there is none, or with `--render`; `--file` names another video). It measures the render the same way and with the reference's parameters (the words come from its takes), takes its parts as its sections, and aligns them in order with the reference's: the sections of `interpretation.json` when it is there, else the neutral segments (`sections: { from: "interpretation" | "segments", source? }` says which). The alignment is dynamic time warping over durations, where they start and names: a part whose key or tags share a word with a section's name or role (`hook-b`, `tags: ["cta"]`, or `s3`) matches it more readily, and one section may match several parts or the other way round. It reports first the raw differences (render − reference): per section `ref: { names, … }`, `ours: { keys, … }`, `diff: { seconds, share, cutsPerMinute, wordsPerMinute, textSeconds }`, and for the whole video `overall.diff` (duration, pace, time to first word, text share); then, labelled as such, a summary at a tolerance: `summary: { tolerance, sections, sectionsWithin, shareWithin, meanDurationDiff }` (sections within ±10 % by default, `--tolerance 0.15`). The side-by-side sheet (`--out`, default `.allyhub/compare/…png`) puts each reference section over the parts matched to it.
 
 ## Defaults
 
@@ -865,6 +1039,13 @@ Every value AllyHub uses when you give none, and where you change it. They are s
 | Before the first word, after the last | 0.2 s, 0.3 s | `part({ lead, tail })`, `defaults.part` (output or project) |
 | A part's still | 0.4 s before its end | `part({ still })` |
 | Ending silent parts on the beat | off | `music: { snap: true }` (tempo: `bpm`, else measured) |
+| How parts join | a cut | `part({ transition })` |
+| A transition's length | 0.4 s | `transition: { dur }` |
+| Where its window lies | half before the join, half after | `transition: { split }` (0 to 1: the share before) |
+| Its easing | `linear` (fade, dip, custom), `in-out` (slide, push, wipe, zoom) | `transition: { ease }` |
+| A slide's, push's or wipe's direction | `left` | `transition: { direction }` |
+| A dip's colour | the look's background | `transition: { color }` |
+| A zoom's scales | the part before grows to 1.2; this part settles from the same | `transition: { scale, from }` |
 | Frames per second | 30 | `video(…, { fps })` |
 
 **Cuts** (edits files and the transcript tools)
@@ -875,7 +1056,11 @@ Every value AllyHub uses when you give none, and where you change it. They are s
 | Longest pause kept | none (pauses kept) | edits file `maxPause` |
 | A take's noise reduction | none; 12 dB when asked | `take(…).denoise(db)` |
 | Room tone in leads and tails | the quietest steady stretch measured | `take(…).roomTone(false \| { from, to })` |
+| Room tone's level at a join | matched to the floor of the take's own room beside it (up to 0.3 s of it, at least 0.1 s), at most 6 dB either way | `take(…).roomTone({ match, gainDb, limitDb })` |
+| Room tone's cross-fade with the take | 0.04 s, equal-power | `take(…).roomTone({ fade })` |
 | A sound between words is listed when | within 22 dB of the speech, 8 dB over the floor, at least 0.1 s; voiced from 0.6 | `allyhub transcript --sound-within --sound-floor --sound-min --sound-voiced`; `--all` lists every stretch |
+| A word is marked long when | it lasts 2 × what its letters take at the take's own rate and 0.15 s more; a dip inside a word is 10 dB under the loudest frame on each side | `allyhub transcript --word-ratio --word-excess --word-dip`; `--all` lists every word |
+| A stretch cut inside a word | none | edits file `inWord: [{ from, to }]` |
 | A word counts as scripted, a line as said | 50 % and 40 % of its letters matched | `allyhub transcript --script … --match --line-match`; `--all` lists every line |
 | Transcript lines | a new line at the first sentence end after 12 words | `allyhub transcript --line-words` |
 | Words listed as unsure | none listed | `allyhub transcript --confidence <0-1>` (1 lists every word that has one) |
@@ -915,6 +1100,8 @@ Every value AllyHub uses when you give none, and where you change it. They are s
 | A punch-in | 1.12×, 0.2 s in, 0.25 s out, `in-out`, about the face (else 0.5, 0.42) | `punchIn: [{ at, until, scale, in, out, ease, center }]` |
 | A pullback | 1.12×, 0.6 s, `out`, about the face | `pullback: { scale, dur, ease, center }` |
 | Fit, box, speed, gain | cover, the full frame, 1, 0 dB | `fit`, `box`, `speed`, `gainDb` |
+| The person's edge over a treated background | feather 2 px, shrink 4 px, at 1080p (× the format's short side / 1080) | `background: { feather, shrink }` |
+| A matte's firm levels | under 0.25 background, over 0.75 the person | none: `feather` and `shrink` shape the edge |
 
 **Layout**
 
@@ -931,6 +1118,8 @@ Every value AllyHub uses when you give none, and where you change it. They are s
 | A piece's formats | `defaults.formats`, else `16x9` | `definePiece({ formats })` |
 | A profile's covered edges, length limit, loudness | the profile's table above | `formats: [{ format, safe, maxDuration, loudness }]` |
 | A profile's mp4 encode | crf 20 and a most video bitrate, the profile's table above (other formats: crf 18, no cap) | `allyhub render --crf --max-bitrate` |
+| The buffer a bitrate cap is counted by | two seconds of the cap, nine tenths full at the start (x264's and x265's own) | none: `--max-bitrate` sets the cap |
+| A part over its cap, encoded again | one thread; x264 `faster`, x265 `medium` | `--max-bitrate 0`, a higher cap or a higher `--crf` avoids it |
 
 **Voice and speech**
 
@@ -944,7 +1133,11 @@ Every value AllyHub uses when you give none, and where you change it. They are s
 | Default | Value | Option |
 | --- | --- | --- |
 | Flat frames | a luma spread of 3 or less, runs of 4 frames, 10 luma levels from the picture around | reported in each `flat-frames` fact's `options` |
+| Offset between two recordings | any offset; 5 windows of 5 s, each searched within 0.5 s of the coarse offset | `allyhub sync --max --windows --window --search` |
 | Reference cuts | 0.3 for a cut; 0.25 s apart; weak from 0.12 at 1.8 × prominence | `allyhub reference --threshold --min-shot --weak-floor --prominence --all` |
 | Reference OCR | confidence 60, 80 for words of three characters or fewer | `allyhub reference --ocr-confidence --ocr-short --all` |
+| Reference sentences and segments | a pause of 0.5 s ends a sentence; a cut within 0.15 s of the gap is the sentence end's; segments of 2 s or more | `allyhub reference --pause --cut-within --min-segment --all` |
+| Reference text lines | the same text within 0.05 of the frame is one line; a word said within 1 s of a sighting counts as said | `allyhub reference --said-within` (the first is fixed, recorded as `ocr.samePlace`) |
+| Gemini's section times | moved to a boundary candidate within 0.7 s | edit the interpretation it writes (`snappedWithin` records it) |
 | Compare's summary | sections within ±10 % | `allyhub compare --tolerance` |
 | Moments the check measures | each part's still, layer and cue middles, every second over footage with a face track or matte; at most 24 a part | `allyhub inspect --at` measures the moments you name |
