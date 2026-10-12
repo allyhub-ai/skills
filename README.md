@@ -2,7 +2,11 @@
 
 Product demo videos from a few sentences, made by your coding agent.
 
-This repository holds the AllyHub skill and the Claude Code and Codex plugins that install it. The skill teaches your agent to use the AllyHub CLI (`npx allyhub`), which previews, checks and renders videos and decks on your computer.
+Runs on your machine. No account needed.
+
+This repository holds the AllyHub skill. It teaches your agent to use the AllyHub CLI (`npx allyhub`), which previews, checks and renders videos and decks on your computer. It works in Claude Code, Codex and other agents that read skills.
+
+## Install
 
 ```bash
 npx skills add allyhub-ai/skills
@@ -12,33 +16,26 @@ Then ask your agent. In Claude Code:
 
 ```text
 /allyhub make a 45-second demo of https://your-product.com
+/allyhub cut my recording ~/Videos/take.mov into a 45-second TikTok with captions
+/allyhub make 6 ad variants from these hooks and demos
 ```
 
 In Codex:
 
 ```text
-@allyhub make a 45-second demo of https://your-product.com
+$allyhub make a 45-second demo of https://your-product.com
 ```
 
-(In the Codex CLI with the skill installed through `npx skills add`, mention it as `$allyhub`.)
+In another agent, ask for the skill by name: "Use the allyhub skill to make a 45-second demo of https://your-product.com".
 
-## Other ways to install
-
-As a plugin in Claude Code:
-
-```bash
-claude plugin marketplace add allyhub-ai/skills
-claude plugin install allyhub@allyhub
-```
-
-Installed as a plugin, Claude Code also gets the **AllyHub pane**: the project card of the workspace your agent is working in (each video and deck, whether the check passed, exports and their files), kept up to date while the preview runs. Its buttons open the editor in the desktop app's browser pane, and when a turn ends the editor comes back in front if it was closed. `/allyhub` opens the pane. (The pane is built on Claude Code's function hooks, an early-access API.)
-
-Codex users can also install it from the `.codex-plugin` package in this repository. The CLI can also write the skill where your agent looks: `npx allyhub skill install`.
+Your agent opens a live preview in your browser (in Claude Code's desktop app, in the pane beside the chat). Circle anything you want changed and say how, then export when you are happy.
 
 ## What you need
 
-Node.js 22.19 or newer. The CLI downloads headless Chrome the first time it needs it; rendering MP4s also needs ffmpeg, and your agent tells you how to get it if it is missing.
+Node.js 22.12 or newer. The CLI downloads headless Chrome the first time it needs it; rendering MP4s also needs ffmpeg, and your agent tells you how to get it if it is missing. Working with recordings uses local models, downloaded the first time they are needed and run on your computer: speech recognition (about 700 MB) and face tracking and person mattes (about 270 MB).
+
+Making, previewing and rendering are free and need no account. Voiceover, generated images and footage, and research use credits on your allyhub.com account; your agent tells you the price first.
 
 ## License
 
-The skill and plugin files in this repository are under the [MIT License](LICENSE). The AllyHub CLI they use is proprietary and has its own license. "AllyHub" and its logos are trademarks of AllyHub, Inc.; the MIT License does not grant the right to use them.
+The skill files in this repository are under the [MIT License](LICENSE). The AllyHub CLI they use is proprietary and has its own license. "AllyHub" and its logos are trademarks of AllyHub, Inc.; the MIT License does not grant the right to use them.
