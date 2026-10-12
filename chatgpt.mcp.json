@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "allyhub": {
-      "command": "node",
-      "args": ["./launcher.mjs"],
-      "cwd": "."
-    }
-  }
-}
