@@ -9,7 +9,7 @@ The values in this reference and in the skill (sizes, timings, levels, words to 
 | Import path                | Contents                                                                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@allyhub/sdk`            | `definePiece`, `video`, `paged`, `part`, `take`, `say`, `footage`, `defineComponent`, `custom`, `defineConfig`, prop types, animation tools |
-| `@allyhub/sdk/dom`        | Layout and DOM helpers for writing components: `layout`, `contentBox`, `textBlock`, `eyebrow`, `fitTo`, `rise`, `pop`, `h`, `css`, `tag`, `one`, `all` |
+| `@allyhub/sdk/dom`        | Layout and DOM helpers for writing components: `layout`, `contentBox`, `textBlock`, `fitTo`, `h`, `css`, `tag`, `one`, `all` |
 | `@allyhub/sdk/client`     | Types only: the types of media and data imports, for a `tsconfig.json` you add                                                           |
 
 Import files inside the workspace with relative paths. URLs and files outside the workspace cannot be imported (AK-B005); an npm package can when a `package.json` in the workspace declares it and it is installed.
@@ -45,7 +45,8 @@ assets/text/zh-cn.json
 components/screen-demo.ts           a starter component, copied in with allyhub add: the workspace's own code
 components/title-card.ts            a component of your own
 
-agent/memory/                       the project's memory: what it has taught whoever works on it
+agent/memory.md                     the project's memory: what it has taught whoever works on it
+agent/daily-notes/2026-10-14.md     a day's work, logged
 
 .local/                             this computer only, never shared with the project
 .local/work/                        your working folder: what can be thrown away
@@ -54,7 +55,7 @@ agent/memory/                       the project's memory: what it has taught who
 .local/trash/                       what the person deleted
 ```
 
-**What a file is decides its folder**: made for the person and needed in the end, `content/`; a file reused as it is, `assets/`; code reused, `components/`; learned and worth knowing next time, `agent/memory/`; anything that can be thrown away, `.local/work/`.
+**What a file is decides its folder**: made for the person and needed in the end, `content/`; a file reused as it is, `assets/`; code reused, `components/`; learned and worth knowing next time, `agent/memory.md` (what happened on a day, `agent/daily-notes/<date>.md`); anything that can be thrown away, `.local/work/`.
 
 **An item is a folder under `content/` whose entry file is named for its kind**: `video.ts` for a video, `slides.ts` for a deck (`.js`, `.tsx` and the like work too), `doc.mdx` for a doc. A video's or a deck's entry file is the piece: it default-exports `definePiece(...)`, and its outputs are of that kind (`video(...)` in `video.ts`, `paged(...)` in `slides.ts`).
 
@@ -360,6 +361,99 @@ A centred line, in blue.
 - **Render**: `allyhub render --piece <its place under content/>` writes `.local/out/<its place>/doc.pdf`; `--type png` adds a picture of the whole page, which is how you look at your own doc. Without `--piece`, `allyhub render` renders the docs too.
 - **The preview**: `allyhub dev` shows a doc on a page of its own (`?doc=<its place>`), and AllyHub Studio in the project's tree.
 
+## Sheets: `content/<name>/sheet.csv`
+
+A sheet is rows a person reads, sorts, filters and edits as a grid: leads, research findings, a content calendar, numbers a video charts. It is not a piece: no `definePiece`, no outputs. Its folder holds:
+
+```
+content/research/leads/
+  sheet.csv        the rows: a header row, then one row per record
+  sheet.yaml       optional: what the columns are
+  views/<id>.yaml  optional: one saved view each, its id its file's name
+```
+
+- **`sheet.csv` is plain CSV** (RFC 4180: fields quoted only when they hold a comma, a quote or a line break; `""` for a quote). Every value is text; its column's type says how it is read. A row may have fewer fields than the header (the rest are empty), never more. A blank line is a row of empty cells.
+- **`sheet.yaml`**, every field optional:
+
+  ```yaml
+  title: Launch leads          # its name in the project; else the folder's
+  key: id                      # the column whose value names each row: whole and unique
+  primary: company             # the column a row is called by: a card's title, a row's page
+  columns:
+    arr: { type: number, format: { style: currency, currency: USD, decimals: 0 }, width: 120 }
+    stage:
+      type: select
+      options:
+        - { name: Lead, color: gray }
+        - { name: Won, color: green }
+    tags: { type: multi-select, options: [inbound, partner], separator: ";" }
+    signed: { type: date, format: short }
+    notes: { type: text, wrap: true }
+  ```
+
+  A column not named there is text; `stage: select` is shorthand for `{ type: select }`. Without `primary`, a row is called by the first text column that is not the key.
+
+  | Type | A value is written | Options |
+  | ---- | ------------------ | ------- |
+  | `text` | as it is | `wrap` |
+  | `number` | `1234.5`: digits, a point for decimals, no thousands separator | `format`: `plain`, `percent` (0.12 shows 12%), `currency`, or `{ style, currency, decimals, thousands }` |
+  | `select` | one option's name | `options`: names, or `{ name, color }` with a doc's colours |
+  | `multi-select` | names joined by the separator: `a;b` | `options`, `separator` (default `;`) |
+  | `date` | `2026-10-14`, or `2026-10-14T09:30` (read as UTC unless it has a zone) | `format`: `short`, `long`, `iso`, or `{ style, time: false }` |
+  | `checkbox` | `true` or `false` | |
+  | `url`, `email`, `phone` | as it is; shown as a link | |
+  | `file` | a path in the project, from the sheet's folder or from the project's root | |
+
+  Every column also takes `width` (px) and `wrap` (true or false): how it shows where no view says otherwise. An empty cell is allowed in every type.
+- **A view** (`views/pipeline.yaml`) is one way of looking at the rows, every field optional:
+
+  ```yaml
+  title: Pipeline
+  order: 1                                  # its tab's place; else by id
+  columns: [company, stage, arr, owner]     # shown, in this order; the rest hidden
+  widths: { company: 220 }
+  freeze: 1                                 # columns kept in place at the left
+  wrap: [notes]
+  sort: [{ column: arr, desc: true }, company]
+  filter:
+    all:                                    # or any; a list alone is all
+      - { column: stage, in: [Lead, Qualified] }
+      - { column: arr, ">=": 10000 }
+      - any:
+          - { column: owner, empty: true }
+          - { column: owner, is: Ana }
+  group: owner
+  summary: { arr: sum, company: count }     # the footer
+  layout: grid                              # grid (default), board, gallery or calendar
+  colors:                                   # rows coloured by what they say: the first rule a row meets
+    - { color: green, when: [{ column: stage, is: Won }] }
+    - { color: red, when: { any: [{ column: stage, is: Lost }, { column: arr, "<": 1000 }] } }
+  ```
+
+  A view lays its rows out as a `grid` (the default), or as cards: a `board` has a lane per option of its `group`, which must be a select column (a lane for rows with no value first, then the options in their order); a `gallery` shows each row as a card with the picture of its `cover`, a file column; a `calendar` puts each row on the day its `date`, a date column, says (the day as written, its zone not applied). A card's title is the sheet's primary column, its fields are the other columns the view shows; `filter` and `sort` apply to every layout. The person moves a card to another lane or day, which writes that cell, and, where the view does not sort, among the rows, which writes the row's place in `sheet.csv`. `colors` take a doc's colours (`gray`, `brown`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`), and `when` is a filter: a stripe and a tint on a row in the grid, the same on a card.
+
+  | Column type | Operators |
+  | ----------- | --------- |
+  | text, url, email, phone | `is`, `is-not`, `contains`, `not-contains`, `starts-with`, `ends-with`, `empty`, `not-empty` |
+  | number | `=`, `!=`, `<`, `<=`, `>`, `>=`, `between: [low, high]`, `empty`, `not-empty` |
+  | select | `is`, `is-not`, `in`, `not-in`, `empty`, `not-empty` |
+  | multi-select | `has`, `has-any`, `has-all`, `has-none`, `empty`, `not-empty` |
+  | date | `on`, `before`, `after`, `on-or-before`, `on-or-after`, `between`, `empty`, `not-empty` (by day) |
+  | checkbox | `is: true` or `is: false` |
+  | file | `empty`, `not-empty`, `contains` |
+
+  Summaries: `count`, `filled`, `empty`, `unique` for any column; `sum`, `average`, `median`, `min`, `max` for a number; `min`, `max` for a date; `checked` for a checkbox. Sorting is by type (numbers as numbers, an option by its place among the options), empty cells last. A condition with no value yet holds for every row. Anything across sheets (a join, a chart of several) is not a view: write it as a video or a doc.
+- **Rows are named as a spreadsheet names them** where the person points at cells: `B4` or `B4:C9`, columns by their place in `sheet.csv`, rows counted from 1 under the header (row 1 is the file's second line).
+- **The person's edits** rewrite only the rows they changed; every other row of `sheet.csv` keeps its bytes, and an edit to `sheet.yaml` or a view changes only that field's text. You and the person can be in the sheet at once: what you write shows in their grid without a reload, each changed cell marked with your name for them to keep or undo, and their unsaved edits are merged onto yours cell by cell (by `key` when the sheet has one, which is why a key helps). Write each file whole as it is now with your change in it.
+- **What the person does by hand** is a spreadsheet's basics: typing, pasting, filling and clearing cells; inserting, deleting, moving and resizing rows and columns; renaming a column; its format from a short list (text, number, currency, percent, date, checkbox, a dropdown list, which is `select` with the column's values as options); sorting and filtering a column by ticking its values; find and replace. Everything else has no control in the editor and is asked of you: views and their tabs, filters with conditions, grouping, footers, colour rules, layouts, option colours, a number's decimals or currency, the key and primary columns, and values a formula would work out. A sort or filter the person makes by hand stays on their computer; when they ask to keep it, write it as a view. A ticked filter is written as the `any` group of one column's conditions, in a top-level `all`.
+- **A question about cells** reaches you with the sheet's file, the range, what the cells say and the rows' keys.
+- **A sheet too long to read whole**: `allyhub sheet profile <its place>` measures every column: its type, how many cells are empty, how many distinct values (a multi-select's distinct names), how many its type cannot read, the smallest and largest (a number's sum and mean too, a text's shortest and longest in characters) and its most frequent values (`--top`, default 5; `--json` for all of it). Numbers only. (`allyhub sheet` alone is a video's contact sheet.)
+- **A sheet from a file**: `allyhub sheet import <file> [--to <place>]` makes `content/<place>/sheet.csv` and `sheet.yaml` from a `.csv` (copied as it is), a `.tsv` (written as CSV) or an `.xlsx` (a sheet per worksheet with something in it, `<place>-<worksheet>` when there are several, typed only where the workbook types a whole column), named for the file unless `--to` names the place. It never writes over a place that is taken.
+- **Check**: `allyhub check` reports rows that are not CSV, a header with an empty or repeated name, a row with more fields than the header, a value its column's type cannot read (a few per column, then a count), a `file` that is not in the project, a key that is empty or repeated, a spec or a view that names a column the sheet does not have or does not match the format, an operator that does not fit its column, a `board` without a select column for its `group`, a `calendar` without a date column for its `date`, a `cover` that is not a file column, and a sheet inside another item's folder (AK-M009), each with its file and line.
+- **Render**: `allyhub render --piece <its place under content/>` writes `.local/out/<its place>/sheet.xlsx` (an Excel workbook: values by type, numbers and dates in their formats, a select's options as each cell's list); `--type csv,md,json` writes a copy of the CSV, a Markdown table and JSON (numbers as numbers, checkboxes as true or false, a multi-select as a list).
+- **Data for a video**: a piece reads a sheet like any data file, `ctx.data("content/research/leads/sheet.csv")`: one object per row, a column of numbers as numbers.
+- **The preview**: `allyhub dev` shows a sheet on a page of its own (`?sheet=<its place>&view=<id>`), and AllyHub Studio in the project's tree. A person can also make a sheet from a `.csv`, `.tsv` or `.xlsx` file (one sheet per worksheet, typed only where the workbook types a whole column).
+
 ## Rendering
 
 `allyhub render --type …` makes, for a video:
@@ -409,7 +503,7 @@ The stage renders offline, so it draws only fonts that are files: its own and th
 | `"Noto Sans SC"`   | Chinese                    | 400 and 700                      |
 | `"Noto Color Emoji"` | Colour emoji (the look's `font.emoji`) | 400                   |
 
-- The look's `display` and `body` fonts are both `"Inter Variable", "Noto Sans SC", sans-serif`.
+- The look's `display` and `body` fonts are both `"Inter Variable", "Noto Sans SC", sans-serif` until the look names others: a fallback, so every piece whose look names no font is set in Inter.
 - Emoji a component draws on purpose (`captionWord`'s `emoji`, `emojiEl`) use `var(--ak-font-emoji)`, Noto Color Emoji: the same picture on every computer. Emoji inside other text fall to the computer's own emoji font, which differs between computers (and a Linux machine may have none): put them in an element with `fontFamily: "var(--ak-font-emoji)"` at weight 400. Its `mono` is the computer's own monospace font (`ui-monospace, "SF Mono", Menlo, monospace`): it differs between computers, so bring a mono font when the piece shows code or terminal text.
 - **Any other font** (a brand font, a display face, a script the stage lacks): `allyhub font add "<family>"` downloads an open-licence font into `assets/fonts/<id>/` with its licence and a stylesheet, and prints the import line and the `look.font` value. By hand: put the `.woff2` in the workspace, declare it in a `.css` file the piece imports, and use the family name:
 
@@ -1038,12 +1132,10 @@ A component must draw the same frame at the same moment: `render(t)` sets every 
 | `text(v)`, `list(v)`              | A prop as a string (a number or boolean as text; anything else `""`), and as a list of strings (one value becomes a list of one) |
 | `textBlock(value, { size, weight?, color?, font?, lineHeight?, align? })` | A `div` of text that wraps by width, keeps words together (Chinese broken only between words) and balances its lines; defaults weight 700, `var(--ak-color-fg)`, `var(--ak-font-display)`, line height 1.15, left |
 | `marked(line, styles?)`           | A `span` with a line's marks drawn (see Marks in a line): a plain run as text, a marked run as a `span` with `data-mark` (its kinds: `"strong"`, `"strong em"`…), so `render` can find a stressed run and move it on its own. `line` is a string (read with `readMarks`) or a text already read (`{ text, marks }`). Each kind's style is `styles[kind]`, else `MARK_STYLES[kind]`: `strong` weight 700 (nothing to see in a line already that heavy: give a colour or a weight of your own), `em` `var(--ak-color-accent)`, `strike` a line through, `code` `var(--ak-font-mono)` at 0.9 em. Chinese gets the same word breaks as `textBlock`; append it to any block (`const el = textBlock("", { size }); el.append(marked(s(key), { strong: { color: "#ffdf20" } }))`) |
-| `eyebrow(value, size)`            | A small uppercase label in `var(--ak-color-accent)` and `var(--ak-font-body)` |
 | `wordBreaks(value)`               | Chinese text with zero-width spaces between its words (the browser's own word segmenter), so `word-break: keep-all` breaks lines only between words; other text unchanged |
 | `contentBox(L, style?)`           | An absolutely placed flex column over `layout()`'s content box, centred vertically; `style` overrides |
 | `tag(el, name)`, `one(el, name)`, `all(el, name)` | Names an element in `mount`, finds it again in `render`                          |
 | `fitTo(el, { min, max, maxHeight })` | Largest font size that fits                                                                   |
-| `rise(el, t, at, { d, dy })`, `pop(el, t, at)` | Common entrances, as functions of `t`                                              |
 | `captionTop(ctx, L, cue, w, h, opts?)` | A tool: the top of a block w × h, centred across the frame, for one cue: the first spot of `prefer` (`"bottom"`, `"middle"`, `"top"` or a y in pixels; default bottom, top, middle) clear of other layers' text (`ctx.texts`) and the faces over the cue, else just above or below that text, else the least text covered, then the least face. `opts`: `prefer`, `faces` and `texts` (false: do not look), `faceGap` (24 × the type scale), `textGap` (48 ×), `step` (seconds between the moments looked at, 0.1). Call it in `mount` |
 | `freeAreas(ctx, t, opts?)` | A tool: the empty bands of the frame at part time `t`, `[x, y, w, h]`, tallest first: rows of `within` (default the content box) where no face, other layer's text or covered area is. `opts`: `within`, `faces`, `texts`, `covered` (false: ignore), `margin` (24 × the type scale), `minHeight`. Call it in `mount` |
 | `lightDark(el)`                   | `{ light, dark }`: the look's background and text colours sorted by brightness, for text that reads over any footage |
@@ -1083,7 +1175,7 @@ allyhub add screenDemo --to content/launch/film # another folder
 allyhub add screenDemo --force       # put the starter version back over your changes
 ```
 
-- **They are mechanisms, not layouts.** Each does something a piece would otherwise have to work out again: a camera over a screen with a cursor, typing and a press; code with its tokens, typed or revealed; marks that follow another layer's elements and lines routed between them; a chart's scales; captions timed to the words. There is no title card, list, quote, price table, lower third or end card among them: those are a few lines of `custom()` with the DOM helpers (`textBlock`, `fitTo`, `rise`, `marked`, `countText`), and how they look is the piece's own.
+- **They are mechanisms, not layouts.** Each does something a piece would otherwise have to work out again: a camera over a screen with a cursor, typing and a press; code with its tokens, typed or revealed; marks that follow another layer's elements and lines routed between them; a chart's scales; captions timed to the words. There is no title card, list, quote, price table, lower third or end card among them: those are a few lines of `custom()` with the DOM helpers (`textBlock`, `fitTo`, `marked`, `countText`) and the animation helpers (`ease`, `progress`), and how they look, and how they move, is the piece's own.
 - A copy imports only `@allyhub/sdk` and `@allyhub/sdk/dom`, so it stands alone. Import it with a relative path from the entry file: `import { screenDemo } from "../../components/screen-demo.js"` in `content/<name>/video.ts`.
 - Change a copy freely: colors, layout, timing, sounds, new props. Nothing upstream overwrites it; `allyhub add` refuses to replace a copy that has changes unless you pass `--force`.
 - When none fits, write your own with `defineComponent` or `custom` (above). Video is not a component: it is a `footage()` layer.
