@@ -17,23 +17,53 @@ Import files inside the workspace with relative paths. URLs and files outside th
 ## A workspace
 
 ```
-allyhub.config.ts               defaults (languages, formats) and the look
-messages/en.json                strings for videos and slides, one file per language
-messages/zh-cn.json
-app/videos/launch.ts            a piece: default-exports definePiece(...)
-app/videos/vo/en.mp3            a recorded take (audio or video)
-app/videos/vo/en.words.json     its word times, same name as the take
-app/decks/pitch.ts              a deck
-app/components/title-card.ts    a starter component, copied in with allyhub add: the workspace's own code
-app/components/stat-badge.ts    a component of your own
-media/logo.svg
-media/gen/say/<hash>.mp3        speech made by allyhub voice generate, with its .words.json and .gen.json
-pool/hooks/shock-1.mp4          a clip a cloud tool generated (allyhub tools call … --name)
-pool/hooks/shock-1.mp4.gen.json its record: the tool, the input, the credits, when; it moves with the file
-data/completion.csv             data, read in at build time
+AGENTS.md                           this project's standing instructions, when it has them
+allyhub.config.ts                   defaults (languages, formats) and the look
+.gitignore                          has the line .local/
+
+content/                            what is made for the person: every item is a folder under it
+content/launch/film/video.ts        a video: its entry file default-exports definePiece(...)
+content/launch/film/script.en.yaml  its script: what it says and shows, one file per language
+content/launch/film/script.zh-cn.yaml
+content/launch/film/vo/en.mp3       a recorded take (audio or video), in the item that uses it
+content/launch/film/vo/en.words.json  its word times, same name as the take
+content/launch/deck/slides.ts       a deck
+content/launch/plan/doc.mdx         a doc
+content/launch/prices.csv           a loose file the person asked for, beside the items
+content/ads/spring/video.ts         an ad with slots
+content/ads/spring/pool/hooks/shock-1.mp4           a clip a cloud tool generated (allyhub tools call … --name)
+content/ads/spring/pool/hooks/shock-1.mp4.gen.json  its record: the tool, the input, the credits, when; it moves with the file
+
+assets/                             files used as they are by more than one item
+assets/media/logo.svg               pictures, video, sound
+assets/media/gen/say/<hash>.mp3     speech made by allyhub voice generate, with its .words.json and .gen.json
+assets/fonts/space-grotesk/         a font added with allyhub font add
+assets/data/completion.csv          data, read in at build time
+assets/text/en.json                 text several items share, one file per language
+assets/text/zh-cn.json
+
+components/screen-demo.ts           a starter component, copied in with allyhub add: the workspace's own code
+components/title-card.ts            a component of your own
+
+agent/memory/                       the project's memory: what it has taught whoever works on it
+
+.local/                             this computer only, never shared with the project
+.local/work/                        your working folder: what can be thrown away
+.local/out/                         renders
+.local/cache/                       what the tools rebuild
+.local/trash/                       what the person deleted
 ```
 
-File and folder names are up to you. `allyhub check`, `allyhub dev` and `allyhub render` find every module that default-exports `definePiece(...)`.
+**What a file is decides its folder**: made for the person and needed in the end, `content/`; a file reused as it is, `assets/`; code reused, `components/`; learned and worth knowing next time, `agent/memory/`; anything that can be thrown away, `.local/work/`.
+
+**An item is a folder under `content/` whose entry file is named for its kind**: `video.ts` for a video, `slides.ts` for a deck (`.js`, `.tsx` and the like work too), `doc.mdx` for a doc. A video's or a deck's entry file is the piece: it default-exports `definePiece(...)`, and its outputs are of that kind (`video(...)` in `video.ts`, `paged(...)` in `slides.ts`).
+
+- Everything in an item's folder is the item's own: its code split into files, its takes, its music, its cut lists. What several items share goes outside `content/` (`components/`, `assets/media/`, `assets/data/`).
+- Folders above an item only group items (`content/launch/film/`, `content/launch/deck/`). Their names and how deep they go are up to you; the person sees them as they are, as a tree, and can rename and move them. An item cannot hold another item.
+- A file under `content/` that is in no item's folder is a loose file: something the person asked for that is not a video, a deck or a doc (a CSV, a PDF, a picture). The person sees it as a file. It is not checked, and no piece is found in it.
+- `allyhub check`, `allyhub dev` and `allyhub render` find every entry file under `content/`. A piece that is not an item's entry file is AK-M002. An entry file that is not a piece, a second entry file in one folder, an item inside an item and an output of the other kind are AK-M003.
+- Only `content/`, `assets/` and `components/` are built, checked and watched. Nothing in `agent/`, `.local/` or `apps/` (web apps, each a project of its own) is, so a broken file there breaks nothing; the person can look inside each, where they see its files as they are.
+- `.local/` is never shared with the project, so whatever a piece imports must not live there. What you clear out of `.local/work/`, and what the person deletes, goes to `.local/trash/`.
 
 The `vite.config.ts` in the workspace root is read: its `plugins`, `resolve`, `css`, `define`, `json`, `assetsInclude` and `oxc` take effect, after AllyHub's plugins; AllyHub decides the other settings (output, server, env files, the `public` folder).
 
@@ -42,9 +72,11 @@ The `vite.config.ts` in the workspace root is read: its `plugins`, `resolve`, `c
 ```ts
 import { definePiece, footage, part, say, take, video } from "@allyhub/sdk";
 
-import { endCard } from "../components/end-card.js"; // allyhub add endCard
-import { titleCard } from "../components/title-card.js"; // allyhub add titleCard
-import logo from "../media/logo.svg";
+// content/launch/film/video.ts
+// Two components of the workspace's own (defineComponent, below).
+import { endCard } from "../../../components/end-card.js";
+import { titleCard } from "../../../components/title-card.js";
+import logo from "../../../assets/media/logo.svg";
 
 export default definePiece({
   id: "launch-film",
@@ -56,12 +88,12 @@ export default definePiece({
       part({
         key: "hook",
         // The stretch of this language's recording that says the line.
-        speech: take(`./vo/${combo["lang"] ?? "en"}.mp3`).saying(s("launch-film.hook.vo")),
+        speech: take(`./vo/${combo["lang"] ?? "en"}.mp3`).saying(s("launch-film.hook.say")),
         layers: [
           titleCard({
             line1: s("launch-film.hook.line1"),
             line2: s("launch-film.hook.line2"),
-            l2At: s("launch-film.hook.cue.l2"), // a word reference
+            l2At: "@line2", // an anchor of the line: @{line2} in the script
           }),
         ],
       }),
@@ -75,7 +107,7 @@ export default definePiece({
       }),
       part({
         key: "cta",
-        speech: say(s("launch-film.cta.vo"), { voice: "rachel" }),
+        speech: say(s("launch-film.cta.say"), { voice: "rachel" }),
         tail: 2,
         layers: [endCard({ lines: s.list("launch-film.cta.lines"), logo })],
       }),
@@ -86,7 +118,7 @@ export default definePiece({
 
 | Field      | Required | Description                                                                                                                                              |
 | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`       | No       | A stable identity: lowercase letters, digits, `.`, `_`, `-`; `/` makes levels. When omitted, the file's path in the workspace (without the extension) is used |
+| `id`       | No       | A stable identity: lowercase letters, digits, `.`, `_`, `-`; `/` makes levels. When omitted, the item's folder under `content/` is used (`launch/film`) |
 | `title`    | No       | The name people see: one string, or one per language. When omitted, `<id>.title` from messages is used, then the file name                               |
 | `formats`  | No       | What every output is rendered as, see below. Default: `defaults.formats` in `allyhub.config.ts`, then `["16x9"]`                                         |
 | `matrix`   | No       | `{ dims, slots, structures, pick, seed, differ, rules }`: dimensions, crossed in full, and slots of candidates, sampled by rules; see below               |
@@ -95,6 +127,7 @@ export default definePiece({
 
 **Requirements on how it is written** (when one is not met, the check reports an error and says how to fix it):
 
+- The module is an item's entry file: `content/<name>/video.ts` or `content/<name>/slides.ts` (AK-M002, AK-M003; see A workspace).
 - The default export is `definePiece({ … })` directly, or `const piece = definePiece({ … }); export default piece` in the same file. AllyHub does not guess at factory functions or re-exports (AK-M001).
 - `definePiece` is imported from `@allyhub/sdk`.
 - **The module's top level must load in Node**: the build reads `id`, `formats`, `matrix`, `meta` and which outputs exist in Node, without drawing anything. Code that touches `window` or `document` goes inside an output's function or a component's `mount` (AK-R001 gives the fix). The top level cannot use the network (AK-B003) and cannot run forever (AK-B004).
@@ -129,7 +162,7 @@ An entry of `formats` (or a paged output's `format`) can change a format's numbe
 
 | Dimension | How the framework uses it                                                                                                                                           |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lang`    | Selects `messages/<lang>.json`. The first one is the default language; missing keys fall back to it. When `lang` is omitted, it is every language under `messages/` |
+| `lang`    | Selects `assets/text/<lang>.json`. The first one is the default language; missing keys fall back to it. When `lang` is omitted, it is every language under `assets/text/` |
 
 For other dimensions (opening, audience, …) the code reads `ctx.combo` and decides how to use them. The same value cannot be written twice, and `size`, `format`, `piece`, `output` and `token` are not dimension names (AK-M001: the frame is `formats`, and the preview's address uses the others).
 
@@ -218,7 +251,7 @@ Nothing makes a sound unless you put it there: each part's speech, the music, fo
 ```ts
 part({
   key: "how",
-  speech: take("./vo/en.mp3").saying(s("film.how.vo")),
+  speech: take("./vo/en.mp3").saying(s("film.how.say")),
   sounds: [
     { at: "paste", sound: "tick", what: "step 1" }, // a word reference
     { at: 2.4, sound: "./sfx/ding.wav", gainDb: -3 }, // seconds, a file
@@ -228,7 +261,7 @@ part({
 });
 ```
 
-`at` is a word reference or seconds from the part's start; `sound` is a name of the look's sounds, one of the built-in synthesized `whoosh`, `tick` and `pop` (their transient lands on `at`), or an audio file, an import or a path relative to the piece (it starts at `at`). `look.sfx` in `allyhub.config.ts` names files as the look's sounds: `look: { sfx: { whoosh: "media/sfx/whoosh.wav", ding: "media/sfx/ding.mp3" } }` (paths from the workspace's root; a name there replaces the built-in one). A file is levelled by its loudness to the mix's sound-effect level, then by its `gainDb`. A name that is neither a sound nor a file is AK-A001; a file without sound AK-A003. `allyhub timeline` lists them; `allyhub audio` measures where they land against the onsets.
+`at` is a word reference or seconds from the part's start; `sound` is a name of the look's sounds, one of the built-in synthesized `whoosh`, `tick` and `pop` (their transient lands on `at`), or an audio file, an import or a path relative to the piece (it starts at `at`). `look.sfx` in `allyhub.config.ts` names files as the look's sounds: `look: { sfx: { whoosh: "assets/media/sfx/whoosh.wav", ding: "assets/media/sfx/ding.mp3" } }` (paths from the workspace's root; a name there replaces the built-in one). A file is levelled by its loudness to the mix's sound-effect level, then by its `gainDb`. A name that is neither a sound nor a file is AK-A001; a file without sound AK-A003. `allyhub timeline` lists them; `allyhub audio` measures where they land against the onsets.
 
 **The mix.** Each stem is levelled by its measured loudness to a target, and the music dips under speech. Levels follow the moment: while speech plays, music sits at `music` and footage at `footageUnderSpeech`; where nobody speaks they play at `musicAlone` and `footage`. Under the words, the music goes `duck.db` further down, over `attack` before a word and `release` after one, and stays down through pauses shorter than `hold`, so a narration has one steady bed. `video(…, { mix })` changes any of it:
 
@@ -276,6 +309,57 @@ paged(({ s }) => [part({ key: "summary", still: 0, layers: [custom({ mount, rend
 - Checks: each page's still gets the frame checks (overflow, occluded areas, missing glyphs) and the font check; the shuffled-order comparison (AK-D002) is not run. `a4`, `letter` and custom formats have no occluded areas.
 - Export: `allyhub render --type png,pdf,pptx` (without `--type` it makes a PDF); see `allyhub help render`.
 
+## Docs: `content/<name>/doc.mdx`
+
+A doc is what a person reads and edits as a page: a plan, a brief, a report. It is not a piece: no `definePiece`, no outputs, formats, languages or combos, and nothing of it is drawn frame by frame. The file is the doc.
+
+```mdx
+# Launch plan
+
+What we ship, and when. **Forms that fill themselves in** is the one sentence.
+
+- [x] Record the narration
+- [ ] Pick the music
+
+| Week | What ships |
+| ---- | ---------- |
+| 1    | The film   |
+
+<Block align="center" color="blue">
+
+A centred line, in blue.
+
+</Block>
+
+![The logo](../../assets/media/logo.svg)
+```
+
+- **Prose is Markdown** as MDX reads it: headings, paragraphs, `**bold**`, `*italic*`, `~~struck~~`, `` `code` ``, links, bullet, numbered and task lists (nested by indenting), quotes, fenced code, tables, pictures, `---`. A picture's path is relative to the doc's folder and must be in the project.
+- **It is MDX, so `{` and `<` are code.** Write `\{` and `\<` for the characters. A lone `{…}` in a line, and a tag inside a line that is not one of those below, are AK-M008.
+- **What Markdown cannot say is a tag**:
+
+  | Written | Means |
+  | ------- | ----- |
+  | `<u>…</u>` | Underlined |
+  | `<span color="red" bg="yellow">…</span>` | Coloured text, a colour behind it (`gray`, `brown`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, or a CSS colour) |
+  | `<strong>` `<em>` `<del>` `<code>` | The same as `**`, `*`, `~~` and a backtick. Use them where Markdown's own marks do not read back: `**“引号”**` between Chinese characters is not bold, `<strong>“引号”</strong>` is |
+  | `<br />` in a line | A line break. On a line of its own: an empty paragraph |
+  | `<Block align="center" color="blue" bg="yellow">` | One block's look: `align` is `center`, `right` or `justify`. Inside it, on lines of their own with an empty line around each: the block, then any blocks under it |
+  | `<Block toggle>` | Its first block (a heading or a line) folds the blocks after it |
+  | `<Callout icon="⚠️" bg="yellow">` | A line set apart in a box, with a sign before it (💡 without `icon`). Inside it, on lines of their own: the line, then any blocks under it |
+  | `<img src="./a.png" alt="…" width="320" align="center" />` | A picture a person sized or placed. Without those, write `![…](./a.png)` |
+  | `<Table widths="120,,200" head="none">` around a Markdown table | Its columns' widths in px (empty: its own), and its head when that is not the first row: `none`, `column` or `both` |
+
+- **The title is the first-level heading the file opens with** (`# Launch plan`). The person sees it in a field of its own over the doc, and it is the doc's name in the project's lists. A doc that opens with anything else has no title.
+- **A link to another item is a path to its file** from the doc's folder: `[the film](../film/video.ts)`, `[the notes](../notes/doc.mdx)`. The person clicks it to open that video or doc, and makes one by typing `@`.
+- **Any other tag on lines of its own is kept as written** (`<Chart kind="bar" />`), with the `import` lines above it. The person sees it as a named card they can move or delete; it is not drawn yet. To show a moment of a video, render it (`allyhub still`) into the doc's folder and show the picture.
+- **The person's edits rewrite only the blocks they changed.** The rest of the file keeps its bytes: how you wrapped a paragraph, which marker a list uses. When the editor writes a block it writes plain Markdown, and a tag only where one is needed.
+- **You and the person can be in the doc at once.** What you write to the file shows on their page without a reload, each place marked with your name and what was there before, for them to keep or undo. What they typed meanwhile is kept. Write the whole file as it is now with your change in it; do not write over it from an older copy.
+- **Comments**: what the person says about a doc reaches you as a note with the doc's file, the words it is about (or the line of the file, for a block or an empty line they ask you to write at) and, when the doc keeps its threads, a thread id. The threads are in `comments.json` beside the doc: `{ "threads": [{ "id": "c1", "quote": "…", "text": "…", "at": "…", "replies": [{ "by": "person" | "agent", "text": "…", "at": "…" }], "resolved": false }] }`. After you changed the doc, answer in the thread: add `{ "by": "agent", "text": "…", "at": "<ISO time>" }` to that thread's `replies`, set its `resolved` to true when what it asks is done, and leave the rest of the file as it is.
+- **Check**: `allyhub check` reports a doc that is not MDX, a tag or `{…}` a doc does not draw, a picture that is not in the project and a doc inside another item's folder (AK-M008).
+- **Render**: `allyhub render --piece <its place under content/>` writes `.local/out/<its place>/doc.pdf`; `--type png` adds a picture of the whole page, which is how you look at your own doc. Without `--piece`, `allyhub render` renders the docs too.
+- **The preview**: `allyhub dev` shows a doc on a page of its own (`?doc=<its place>`), and AllyHub Studio in the project's tree.
+
 ## Rendering
 
 `allyhub render --type …` makes, for a video:
@@ -295,11 +379,11 @@ paged(({ s }) => [part({ key: "summary", still: 0, layers: [custom({ mount, rend
 - `allyhub still`, `allyhub sheet`, `allyhub frames` and **Final look** in `allyhub dev` (while paused) draw a moment the way the render does: footage and graphics together, with motion blur, `post` and transparency (`--raw` leaves out motion blur, `post` and the LUT). The check looks at the graphic layers as the page draws them, over the background.
 - `allyhub frames --at s,s --overlay` (with `--from-render` too) draws the measurements over each frame: every face box of the footage showing, with its id (solid: the face the layer follows), the person matte's outline, the format's covered areas and the text boxes of the layers at that moment, labelled with their layer, and a legend under the grid; what the media index lacks is named instead of drawn. `--json` has every box per tile (`overlay`). A view: it places nothing.
 - `allyhub frames --from s --to s [--every n] --out strip.png` draws a stretch of consecutive frames instead of the moments of `--at` (seconds of the output, or from `--part`'s start): every frame, or one in every `n`; without `--every`, the fewest apart that fit one image (60 tiles). `--clip move.gif` (or `.mp4`, `.webm`) writes the same stretch as a small silent video for a person to watch, at the film's rate (one frame in `n` plays at 1/`n` of it, so the stretch lasts as long as in the film); with only `--clip` every frame is in it. A gif is at most 960 px wide unless `--width` says. Still frames show a layout; a stretch shows a move: where an entrance starts, whether two things arrive together, what a transition passes through.
-- `--from-render` reads the frames of the last render of that output × combo × format, wherever `--name` or `--out` put it (the render notes each file's place in `.allyhub/renders/latest.json`; `allyhub audio`, `frames --cuts` and `compare` find it the same way); `--from-render --file <video>` reads a file you name instead.
-- `allyhub render --out <folder>` writes the files under that folder instead of `.allyhub/renders`, and `--name <base>` names them, to hand over.
+- `--from-render` reads the frames of the last render of that output × combo × format, wherever `--name` or `--out` put it (the render notes each file's place in `.local/out/latest.json`; `allyhub audio`, `frames --cuts` and `compare` find it the same way); `--from-render --file <video>` reads a file you name instead.
+- `allyhub render --out <folder>` writes the files under that folder instead of `.local/out`, and `--name <base>` names them, to hand over.
 - Captions (`srt`, `vtt`) come from each voiced part's words: the text is the line it says (`saying`, `say`) when it has one, else the take's own words. A cue is one line of at most 42 characters (`--caption-max-chars`; 16 in Chinese, Japanese and Korean, `--caption-max-chars-cjk`), lasting 0.8 to 6 s (`--caption-min`, `--caption-max`) and ending 2 frames before the next (`--caption-gap-frames`).
-- Files go to `.allyhub/renders/<piece>/<output>.<combo key>.<format>.<ext>` (`<output>.<combo id>.<format>.<ext>` when the piece has slots, `<output>.<format>.<ext>` when it has no dimensions).
-- Rendered parts are kept in `.allyhub/cache/parts/` (the least recently used go past 4 GB, `ALLYHUB_PART_CACHE_MB`): a part that did not change, in this combo or another, is not drawn or encoded again. A transition's window is kept the same way, per pair of parts; adding, changing or removing a transition renders its window and the part that comes in, never the part before it. `allyhub render --json` counts both: `parts` and `junctions`, each `{ total, cached }`.
+- Files go to `.local/out/<piece>/<output>.<combo key>.<format>.<ext>` (`<output>.<combo id>.<format>.<ext>` when the piece has slots, `<output>.<format>.<ext>` when it has no dimensions).
+- Rendered parts are kept in `.local/cache/parts/` (the least recently used go past 4 GB, `ALLYHUB_PART_CACHE_MB`): a part that did not change, in this combo or another, is not drawn or encoded again. A transition's window is kept the same way, per pair of parts; adding, changing or removing a transition renders its window and the part that comes in, never the part before it. `allyhub render --json` counts both: `parts` and `junctions`, each `{ total, cached }`.
 - `allyhub doctor` lists the file types this computer's ffmpeg can make.
 
 ## Formats, languages and fonts
@@ -313,7 +397,7 @@ paged(({ s }) => [part({ key: "summary", still: 0, layers: [custom({ mount, rend
 | `WxH`  | any       | none; even sides from 64 to 8192    |
 
 - Text in a preset's covered areas is measured as a `text-covered` fact. Lay out by `ctx.dims` (width, height, `orient`, `safe`), never by the format's name, so custom formats work too. `ctx.dims.safe` is `{ top, bottom, left, right }` in pixels (all 0 for custom formats); `layout(ctx)` turns it into a content box.
-- Languages are the files in `messages/`; the first (or `defaults.languages`) is the default, and a missing key falls back to it with a warning (AK-S002).
+- Languages are the files in `assets/text/`; the first (or `defaults.languages`) is the default, and a missing key falls back to it with a warning (AK-S002).
 
 ### Fonts
 
@@ -327,10 +411,10 @@ The stage renders offline, so it draws only fonts that are files: its own and th
 
 - The look's `display` and `body` fonts are both `"Inter Variable", "Noto Sans SC", sans-serif`.
 - Emoji a component draws on purpose (`captionWord`'s `emoji`, `emojiEl`) use `var(--ak-font-emoji)`, Noto Color Emoji: the same picture on every computer. Emoji inside other text fall to the computer's own emoji font, which differs between computers (and a Linux machine may have none): put them in an element with `fontFamily: "var(--ak-font-emoji)"` at weight 400. Its `mono` is the computer's own monospace font (`ui-monospace, "SF Mono", Menlo, monospace`): it differs between computers, so bring a mono font when the piece shows code or terminal text.
-- **Any other font** (a brand font, a display face, a script the stage lacks): `allyhub font add "<family>"` downloads an open-licence font into `media/fonts/<id>/` with its licence and a stylesheet, and prints the import line and the `look.font` value. By hand: put the `.woff2` in the workspace, declare it in a `.css` file the piece imports, and use the family name:
+- **Any other font** (a brand font, a display face, a script the stage lacks): `allyhub font add "<family>"` downloads an open-licence font into `assets/fonts/<id>/` with its licence and a stylesheet, and prints the import line and the `look.font` value. By hand: put the `.woff2` in the workspace, declare it in a `.css` file the piece imports, and use the family name:
 
   ```css
-  /* media/fonts/space-grotesk/space-grotesk.css */
+  /* assets/fonts/space-grotesk/space-grotesk.css */
   @font-face {
     font-family: "Space Grotesk";
     src: url("./latin-wght-normal.woff2") format("woff2");
@@ -340,7 +424,7 @@ The stage renders offline, so it draws only fonts that are files: its own and th
   ```
 
   ```ts
-  import "../../media/fonts/space-grotesk/space-grotesk.css"; // in the piece
+  import "../../assets/fonts/space-grotesk/space-grotesk.css"; // in content/<name>/video.ts
   // allyhub.config.ts: look: { font: { display: '"Space Grotesk", "Inter Variable", sans-serif' } }
   ```
 
@@ -361,17 +445,56 @@ The stage renders offline, so it draws only fonts that are files: its own and th
 
 ## Strings
 
-All the text people see is in `messages/<locale>.json`: flat keys, each value one sentence. The format matches inlang (Paraglide).
+All the text people see is data, read with `s(key)`. An item's own words are in its **script**; what several items share is in `assets/text/<locale>.json`.
+
+### An item's script
+
+`script.<locale>.yaml` in the item's folder, one file per language: the item's words as a person reads them, in the order they are told.
+
+```yaml
+# content/launch/film/script.zh-cn.yaml
+title: Tidyform 发布
+text:
+  url: tidyform.example
+parts:
+  - id: hook
+    say: Tidyform 让表单自己填好，你@{line2}只需要问不知道的事。
+    screen:
+      line1: 表单自己填好。
+  - id: how
+    screen:
+      items:
+        - 粘贴表单链接
+        - 匹配你已有的答案
+  - id: quote
+    say: Northwind 把注册表单从 <12|十二> 项减到了 <3|三> 项。
+```
+
+- **It becomes messages under the piece's prefix** (its `id`, with `/` as `.`), so code reads it like any text:
+  - `title` is `<id>.title`, the piece's title.
+  - A part's `say` is `<id>.<part>.say`: give it to `say(s(…))` or `take(…).saying(s(…))`.
+  - Each name under `screen` is `<id>.<part>.<name>`. Names nest (`label: { before: … }` is `<id>.<part>.label.before`), and a list is numbered (`items` above is `launch-film.how.items.0`, `.1`).
+  - Each name under `text` is `<id>.<name>`: the item's words that belong to no part.
+- **A part's `id` is the part's `key`** in the piece. The script's order is the order the person reads it in; the video's order is the piece's code. A row for a part the video does not have yet is fine: the script can come first.
+- **A part's `say` may hold anchors**, named places in the line that the code times things by (see Anchors below): `@{name}` before a word, `@{name}…@{/name}` around a stretch of words. The message is the line without them, so the voice, the captions and a recording's search never see one. A line that starts with an anchor needs quotes in YAML (`say: "@{step1}Paste your form link."`).
+- **A piece of a `say` that is shown one way and said another is `<shown|said>`**: a number, a name, an abbreviation (`from <12|twelve> fields`, `<AI|A I>`, `<东京|とうきょう>`). The line as shown, with the left sides, is what `s()` returns and what captions show; the line as said, with the right sides, is what `say` reads aloud and what `saying` looks for in a recording. Either side may be empty: `<™|>` is shown and not said, `<|[laughs]>` said and not shown. Captions keep each word's own time: only the piece that differs is timed in proportion. Spaces at the edges of a side do not count. A part's `say` is always one line: `{ display, speak }` is for other texts, and a `say` written that way is AK-M007.
+- **A row has `id`, `say` and `screen`, and nothing else** (another key is AK-M007). A direction for yourself goes in a comment beside the part's code, or in `.local/work/`.
+- **A text is a string, `{ display, speak }`, or a plural or selection** written as `{ declarations, selectors, match }` (the inlang message below, without its array). A line that is only a number or `yes`/`true` needs quotes: it must be text.
+- A file that is not YAML or not a script, a key a script makes twice, and a key a messages file or another script already has are AK-M007.
+- **The person sees the script as what is said**: the parts that say something, each with its line, in AllyHub Studio's Script column. A part that says nothing is not listed, and what a part shows (`screen`) is not listed either: the person marks that on the picture. A video where nothing is said has no Script to open.
+- The person edits a script's words on the preview page; only that text's bytes change in the file, and a line's anchors stay with the words they are on. Adding, removing or reordering rows is yours.
+- A `script.<locale>.yaml` in a folder with no entry file yet is read and waits for its item.
+
+### Shared text: `assets/text/<locale>.json`
+
+Flat keys, each value one sentence, for what several items use. The format matches inlang (Paraglide).
 
 ```json
 {
-  "launch-film.hook.line1": "表单自己填好。",
-  "launch-film.hook.vo": "Tidyform 让表单自己填好，你只需要问不知道的事。",
-  "launch-film.how.items.0": "粘贴表单链接",
-  "launch-film.how.items.1": "匹配你已有的答案",
-  "launch-film.quote.vo": {
-    "display": "Northwind 把注册表单从 12 项减到了 3 项。",
-    "speak": "Northwind 把注册表单从十二项减到了三项。"
+  "brand.tagline": "表单自己填好。",
+  "brand.legal": {
+    "display": "© 2026 Tidyform",
+    "speak": "Tidyform"
   },
   "pricing.greeting": "你好，{name}",
   "pricing.count": [
@@ -388,32 +511,35 @@ All the text people see is in `messages/<locale>.json`: flat keys, each value on
 }
 ```
 
-- **Keys are prefixed by piece**: `<piece id>.<part>.<name>` (the preview groups the text by the part its key names). The piece's title is `<id>.title`. What a part says is text like any other: name its key as you like (`launch-film.hook.vo`) and give it to `say(s(…))` or `take(…).saying(s(…))`.
+### Reading text
+
+- **Keys are prefixed by piece**: `<piece id>.<part>.<name>` (the preview groups the text by the part its key names). A script makes its keys that way by itself; a shared key is whatever you name it.
 - **Lists use numbered keys**. `s.list("launch-film.how.items")` returns them in order and stops at the first missing number.
 - When the displayed and spoken text differ, write `{ "display", "speak" }`: `s()` returns `display`; speech uses `speak` (the text `say` reads aloud, the line `saying` looks for, the word references found in it), and captions show `display`.
 - `{name}` is a variable; fill it with `s.with(key, { name: … })`.
 - **Plurals and selects** follow inlang's syntax: an array with exactly one item, where `declarations` declares the inputs (`input count`) and the plurals (`local n = count: plural`; ordinals add `type=ordinal`), `selectors` says what to pick by, and the keys of `match` are `selector=value`, with several selectors separated by commas and `*` matching any value. `s.with("pricing.count", { count: 3 })` picks by the current language's `Intl.PluralRules`: an exact number (`n=0`) comes before a category (`one`, `few`, `other`), and a category comes before `*`. With no input, the `other` sentence is used. Other functions (`number`, `datetime`) are not supported yet; the check reports AK-M006.
-- **Keys are typed.** `allyhub check` and `allyhub dev` generate `.allyhub/types/messages.d.ts` from the default language's file: the keys of `s()` and `s.list()` autocomplete, and a wrong key is a `tsc` error; the inputs of `s.with()` are typed by the variables and plurals, and each item of `s.list()` is typed by the structure of the keys. With a `tsconfig.json` (optional), add `".allyhub/types"` to its `include` (`**/*.ts` does not enter folders that start with a dot), and do not put `.allyhub` in `exclude`. `tsc` cannot check a key built from data; write it as ``s(`x.label.${key}` as MessageKey)``, and the check still reports a key that does not exist (AK-S001).
+- **Keys are typed.** `allyhub check` and `allyhub dev` generate `.local/cache/types/messages.d.ts` from the default language's scripts and messages file: the keys of `s()` and `s.list()` autocomplete, and a wrong key is a `tsc` error; the inputs of `s.with()` are typed by the variables and plurals, and each item of `s.list()` is typed by the structure of the keys. With a `tsconfig.json` (optional), add `".local/cache/types"` to its `include` (`**/*.ts` does not enter folders that start with a dot), and do not put `.allyhub` in `exclude`. `tsc` cannot check a key built from data; write it as ``s(`x.label.${key}` as MessageKey)``, and the check still reports a key that does not exist (AK-S001).
 - When the current language does not have the key, the default language's value is returned and a "missing translation" is recorded (AK-S002); when the default language does not have it either, an empty string is returned and an error is recorded (AK-S001).
 - `hint` is `{ max?, note? }`: it does not affect the return value and is not checked; it is a length hint for the people and agents who write the strings.
-- Text lives with the piece: the text of videos and slides goes in messages, so it can be translated and edited in the "All text" table of `allyhub dev` (what a part says included: the table edits the message its speech came from). The check does not report text written in code; it just cannot be edited there, and an agent has to change it. To split a sentence into words or characters for animation, use `splitText(text, "words" | "chars" | separator)`.
+- Text lives with the item: the text of a video or a deck goes in its script, so it can be translated and edited in the "All text" table of `allyhub dev` (what a part says included: the table edits the script line its speech came from). The check does not report text written in code; it just cannot be edited there, and an agent has to change it. To split a sentence into words or characters for animation, use `splitText(text, "words" | "chars" | separator)`.
+- **Marks in a line.** The stretch of a line that is stressed can be written in the line, so it is translated and edited with it: `"One follow-up later: **3 are gone.**"`. The marks are written as Markdown writes them: `**strong**`, `*em*`, `~~struck~~`, `` `code` ``. `s()` returns the line as written; the code that draws it asks for the marks: `readMarks(s(key))` gives `{ text, marks }` (the characters without the delimiters, and `{ at, end, kind }` for each stretch), `markRuns(text, marks)` the runs in order (`{ text, kinds }`, cut wherever a mark starts or ends), `withoutMarks(line)` the characters alone, and `marked(line, styles?)` from `@allyhub/sdk/dom` an element with each marked run in a span (below). A line no code reads the marks of shows its asterisks. A delimiter counts only as a pair, opening before a character that is not a space and closing after one, so `2 * 3 * 4` and a lone `*` stay as they are (`5*3 and 4*2` does pair); `_` marks nothing; a backslash writes the character (`\*`); nothing inside code is a mark. The check names a line's key for its text drawn without the delimiters too. Marks are for text a layer draws: a `say` line is read aloud as written.
 
 ## Import media and data
 
 ```ts
-import plans from "./data/plans.csv"; // → [{ name: "Team", price: 12 }, …]
+import plans from "../../assets/data/plans.csv"; // → [{ name: "Team", price: 12 }, …]
 import take from "./vo/en.mp3"; // → { path, sha256, kind: "audio", duration, words, url }
-import shot from "./media/signup.png"; // → { path, sha256, kind: "image", width, height, elements?, url }
-import demo from "./media/demo.mp4"; // → { path, sha256, kind: "video", width, height, duration, audio, words?, url }
+import shot from "../../assets/media/signup.png"; // → { path, sha256, kind: "image", width, height, elements?, url }
+import demo from "../../assets/media/demo.mp4"; // → { path, sha256, kind: "video", width, height, duration, audio, words?, url }
 ```
 
-- Paths are relative to the importing file and cannot leave the workspace.
+- Paths are relative to the importing file (here `content/<name>/video.ts`) and cannot leave the workspace.
 - Images, audio, video and fonts become a media value: `path` (the path in the workspace), `sha256`, `kind` (`image`, `audio`, `video`, `font`), `width`, `height` (images and video), `duration` (audio and video), `audio` (video: whether it has sound), `url`. `url` is valid only at runtime; do not concatenate or rewrite it.
-- When an audio or video file has a `.words.json` of the same name next to it (`[{ "w", "start", "end" }]`, seconds; `allyhub transcribe <file>` writes it for a recording, on this computer, with each word's `confidence`, 0 to 1: the lowest probability Parakeet gave any of its letter tokens), the value carries `words`: that makes it a take. A take also carries what the build measured of its sound (kept in the media index): `speechDb`, the median level of its words in dBFS, and `sounds`, the stretches heard between words (`{ start, end, peak, mean, voiced, after }`: seconds of the file, peak and mean level in dB against the speech, the share of voiced frames from 0 to 1, the index of the word before). When an image has an `.elements.json` of the same name next to it (element name → `[x, y, w, h]`), the value carries `elements`: a web page screenshot, used by `siteStep`.
+- When an audio or video file has a `.words.json` of the same name next to it (`[{ "w", "start", "end" }]`, seconds; `allyhub transcribe <file>` writes it for a recording, on this computer, with each word's `confidence`, 0 to 1: the lowest probability Parakeet gave any of its letter tokens), the value carries `words`: that makes it a take. A take also carries what the build measured of its sound (kept in the media index): `speechDb`, the median level of its words in dBFS, and `sounds`, the stretches heard between words (`{ start, end, peak, mean, voiced, after }`: seconds of the file, peak and mean level in dB against the speech, the share of voiced frames from 0 to 1, the index of the word before). When an image has an `.elements.json` of the same name next to it (element name → `[x, y, w, h]`), the value carries `elements`: a screenshot of a page with its named elements, as `allyhub asset capture` writes one and `screenDemo` plays on.
 - When a media file has a record beside it, `<file>.gen.json` (see [Generated media](#generated-media-and-its-record)), the value carries `gen`: `{ record, ai, tool?, vendor?, model?, at?, credits?, input?, output?, sha256?, matches? }`.
 - CSV becomes an array of objects, with the header row as keys; a column that is all numbers becomes numbers. YAML becomes JSON; JSON imports as usual.
-- For a dynamic path (a different image per combo) use `ctx.asset("./media/" + name + ".png")`; when it is not found, AK-A001 is recorded.
-- For data at a dynamic path use `ctx.data("./data/" + region + ".csv")`: it returns the parsed content (`unknown`; add the type yourself), is recorded as a read, and goes into the digest. When it is not found, AK-A001 is recorded; when it cannot be parsed, AK-R001. `package.json`, `tsconfig*.json`, lock files, `messages/`, `*.words.json`, `*.elements.json`, `*.gen.json` and folders that start with a dot do not count as data.
+- For a dynamic path (a different image per combo) use `ctx.asset("../../assets/media/" + name + ".png")`; when it is not found, AK-A001 is recorded.
+- For data at a dynamic path use `ctx.data("../../assets/data/" + region + ".csv")`: it returns the parsed content (`unknown`; add the type yourself), is recorded as a read, and goes into the digest. When it is not found, AK-A001 is recorded; when it cannot be parsed, AK-R001. `package.json`, `tsconfig*.json`, lock files, `assets/text/`, `*.words.json`, `*.elements.json`, `*.gen.json` and folders that start with a dot do not count as data.
 - Types: when the workspace has a `tsconfig.json` (only for an editor's type checking; AllyHub does not need it), add `"@allyhub/sdk/client"` to `compilerOptions.types`.
 
 ### Generated media and its record
@@ -443,7 +569,7 @@ Every file a cloud tool call downloads (`allyhub tools call`, `allyhub tools wai
 - `vendor` is the catalog's category unless it names a vendor; `model` is there when the catalog, the output or the input names one. `input` is what was sent, with secrets (fields named like a key, token or password) redacted and inline base64 of 1024 characters or more replaced by the hash and size of its bytes; `inputHash` is the sha256 of the tool's name and the whole input. `output` is what the tool returned, a value whose JSON is longer than 2000 characters replaced by its hash and size (`omitted: "large"`). `sha256` and `bytes` are the file's.
 - **The record belongs to its file: when you move or rename the media, move its `.gen.json` with it.** A record whose `sha256` is not the file's (moved alone, or the file changed) is the `gen-mismatch` fact and `gen.matches: false`, never an error; one that cannot be read is the same fact (`why: "unreadable"`) and the file has no `gen`.
 - `ai` is true for everything a tool call downloads. Set it to `false` by hand where the tool fetched the file rather than generated it (a stock clip): such a file is not listed as generated. For media generated outside AllyHub, write the record yourself: `{ "schema": 1, "ai": true, "tool": "…" }` is enough.
-- `allyhub tools call <tool> --input '{…}' --name pool/hooks/shock-1.mp4` places the result at that path (without an extension it takes the result's) instead of `--out <folder>` (default `.allyhub/tools/<tool>/`). With `--name`, the same tool with the same input again calls nothing and charges nothing, and says so (`kept`); `--force` calls anyway. A file there made from another input, or without a record, is not replaced without `--force` (exit 3): `--force` makes it again over the old one, charged again (`replaced`).
+- `allyhub tools call <tool> --input '{…}' --name content/ads/spring/pool/hooks/shock-1.mp4` places the result at that path (without an extension it takes the result's) instead of `--out <folder>` (default `.local/work/tools/<tool>/`). With `--name`, the same tool with the same input again calls nothing and charges nothing, and says so (`kept`); `--force` calls anyway. A file there made from another input, or without a record, is not replaced without `--force` (exit 3): `--force` makes it again over the old one, charged again (`replaced`).
 - `allyhub tools price <tool>` takes `--input` several times, or an `--input-file` holding a JSON array or one JSON object per line, and prints each call's estimate and the total (`--json`: `calls`, `credits`, `estimated`), so a batch of clips is quoted at once.
 - Where generated media goes: `allyhub timeline --json` lists `generated` (`{ file, parts, gen }`), `allyhub inspect --kind generated-media` says per output × combo × format which generated files it shows or plays and when, and `allyhub batch manifest` has `ai_generated` and `ai_media` per ad. Whether an ad needs a platform's AI label is yours and the person's to decide; AllyHub only reports.
 
@@ -452,10 +578,10 @@ Every file a cloud tool call downloads (`allyhub tools call`, `allyhub tools wai
 ```ts
 part({
   key: "hook",
-  speech: take("./vo/en.mp3").saying(s("launch-film.hook.vo")),
+  speech: take("./vo/en.mp3").saying(s("launch-film.hook.say")),
   lead: 0.2,
   tail: 0.3,
-  layers: [footage("./media/office.mp4"), titleCard({ at: "forms", line1: s("launch-film.hook.line1") })],
+  layers: [footage("../../assets/media/office.mp4"), titleCard({ at: "forms", line1: s("launch-film.hook.line1") })],
 });
 part({ key: "pricing", dur: 3, layers: [priceCard({ … })] });
 ```
@@ -468,6 +594,7 @@ part({ key: "pricing", dur: 3, layers: [priceCard({ … })] });
 | `lead`   | Seconds before the first word; default 0.2 (or `defaults.part`)                                                                                            |
 | `tail`   | Seconds after the last word; default 0.3 (or `defaults.part`; give the last part more, so its picture stays after the last word)                          |
 | `sounds` | Sound effects: `[{ at, sound, gainDb?, what? }]`, see [Sound](#sound-music-effects-and-the-mix)                                                            |
+| `anchors` | Named moments in seconds from the part's start: `{ press: 7.1, map: [9.6, 13.4] }`, a point or a stretch, referred to as `"@press"`, `"@map"`, `"@/map"`; see [Anchors](#anchors). Speech or none |
 | `layers` | What it shows, back to front: `footage()`, components, `custom()`                                                                                          |
 | `still`  | The still moment (cover, sheet, a page): a word reference, seconds from the part's start, or `(dur) => seconds`; default 0.4 s before the part ends          |
 | `slot`   | The slot this part fills (default: its key, when that is a slot's name)                                                                                     |
@@ -514,7 +641,7 @@ Every part's speech has words: that is what times the part, places its layers, d
 - **`take(file)`**: a recording, audio or video (an import, or a path relative to the piece), with its words in the `.words.json` beside it. Without words the check reports AK-T001: run `allyhub transcribe <file>`. On its own it is the whole take, from its first word to its last. Narrow it with:
   - **`.range(from, to?)`**: from the first words `from` to the end of the first `to` after them (phrases of several words; case and punctuation ignored); without `to`, to the end. A phrase the take does not say reports AK-T003 with the nearest matches.
   - **`.saying(text)`**: the stretch that says this line, usually `s(key)`: it is found by its words, tolerating what recognition got wrong (the line wins: its spelling is the caption, and word references are found in it). When several parts take the same file, each searches after the previous part's stretch, so one recorded narration serves several parts, each with its own line in messages; a line not said after it (parts in another order than the take) is searched for in the whole take. A line it cannot find reports AK-T003. How much of the line was found is data: `allyhub timeline` prints it when it is under 100 %, and `--json` has every part's `speech.match` (`score`, the share of the line's letters found, 0 to 1; `from`, the word the search started at).
-  - On a take with `.edits()`, both look only at the words the edits keep, as the cut plays: a phrase or line said only in removed words (a retake you cut), or a line that says words the edits remove inside it, reports AK-T006 with the removed words. `allyhub timeline` prints under each part what it says (the line) and what it plays (`heard:`, the take's kept words, with their indices).
+  - On a take with `.edits()`, both look only at the words the edits keep, as the cut plays: a phrase or line said only in removed words (a retake you cut), or a line that says words the edits remove inside it, reports AK-T006 with the removed words. A take a cloud tool generated has the text it was made from in its record (`gen.input.text`): a part's line that is not in that text (the line changed since; case, spacing and punctuation ignored, and a `<shown|said>` piece compared as said) reports AK-T007, since the sound still says the old words. `allyhub timeline` prints under each part what it says (the line) and what it plays (`heard:`, the take's kept words, with their indices).
   - **`.edits(path)`**: a cut list, a JSON file relative to the piece (`./edits/host.json`) that may not exist yet: you write it (plan it with `allyhub transcript` and check it with `allyhub edits`, see below), and the preview's **Transcript** sheet writes it as the person strikes words and sounds. The take's words move onto the edited clock (word references, captions and timing follow it), and its footage and sound follow the same kept stretches:
     ```json
     {
@@ -531,8 +658,10 @@ Every part's speech has words: that is what times the part, places its layers, d
     - **It cross-fades with the take** over `fade` seconds (default 0.04, equal-power, inside the take's own room and never into a word); one loop of the stretch into the next and the fills of two parts in a row cross-fade the same way. `fade: 0` butts it against the take with the mix's 10 ms fades.
     - **A missing level stays missing**: where the take keeps under 0.1 s of its own room at a join (a neighbouring word right there), there is no floor to measure and the fill plays as recorded.
     - `allyhub timeline` prints every fill with its numbers: `room tone, lead: 3.20 – 3.56 from 41.30 s of the file at +3.2 dB (matched; the fill's floor −58.4 dBFS, the take's over the 0.14 s of its own room at the join −55.2 dBFS; cross-fade 0.040 s)`. `--json` has them as `timeline.audio.room[]`, each `{ file, at, from, dur, gainDb?, fadeIn?, fadeOut?, tone }` with `tone` `{ part, side: lead | tail, join, pad, level, floor, gainDb, from: matched | given | off | unmeasured, limited?, fade }`. `allyhub edits` prints the take's room tone stretch, its floor, and the floor at each end of what an edits file keeps.
-  - **`.denoise(db?)`**: reduces the noise in its sound by `db` (default 12) with ffmpeg's FFT denoiser, in the render and in the preview (which makes the denoised sound once, into `.allyhub/cache/denoise/`, and plays the take as recorded until it is made).
-- **`say(text, { voice?, tool?, params? })`**: text to speech. `allyhub voice generate` makes the file, `media/gen/say/<hash>.<ext>` with its words and its record (`.gen.json`); the hash covers the text read aloud, the voice, the tool and the params, so a changed line needs a new file. `params` is extra input for the voice tool (plain JSON; see `allyhub tools describe <tool>` for what it takes; not `text` or `voiceId`): it is sent with the text and voice, and the server checks it against the tool's schema. A `say` without its file reports AK-T002; until then the part lasts about as long as the line would take. The tool defaults to `tts-elevenlabs-multilingual-v2`; `allyhub voice generate --quote` prices the missing files first (it is billed by character, so tell the person the price before you run it).
+  - **`.denoise(db?)`**: reduces the noise in its sound by `db` (default 12) with ffmpeg's FFT denoiser, in the render and in the preview (which makes the denoised sound once, into `.local/cache/denoise/`, and plays the take as recorded until it is made).
+- **`say(text, { voice?, tool?, params? })`**: text to speech. `allyhub voice generate` makes the file, `assets/media/gen/say/<hash>.<ext>` with its words and its record (`.gen.json`); the hash covers the text read aloud, the voice, the tool and the params, so a changed line needs a new file. `params` is extra input for the voice tool (plain JSON; see `allyhub tools describe <tool>` for what it takes; not `text` or `voiceId`): it is sent with the text and voice, and the server checks it against the tool's schema. A `say` without its file reports AK-T002; until then the part lasts about as long as the line would take. The tool defaults to `tts-elevenlabs-multilingual-v2`; `allyhub voice generate --quote` prices the missing files first (it is billed by character, so tell the person the price before you run it).
+- **A narration made in one request is a take.** `allyhub tools call <voice tool> --input '{ "text": … }' --name content/launch/film/vo/en.mp3` writes the sound, its record and, when the tool returns word times, `vo/en.words.json` (the result's `words`); each part then takes its line with `take("./vo/en.mp3").saying(s(key))`. `say` is a request per part instead. Which to use is yours: a voice tool's voice differs from one request to the next (pitch, brightness, pace) and holds within one, and a file per part starts and ends each part on its own, so a sentence there stays within one part.
+- **`allyhub audio`** measures the mix you would render (or `--from-render`, the file): loudness, true peak, silences, onsets against cuts and cues, each part's speech, and under **Voice** each speaking part's voice from its own sound file: median pitch in Hz with its 10–90 % range, pace (words or CJK characters a second), the share of energy above 3 kHz in dB, and the step from the speaking part before (semitones, pace in percent, dB). They are numbers, never a verdict; a pitch that could not be measured (too little voiced sound) is left out, not estimated. `--pitch <low-high>` (default `75-400` Hz) is the range searched and `--bright <Hz>` (default `3000`) where brightness is split.
 
 ## Word references
 
@@ -546,7 +675,45 @@ A word reference names a moment in a part by what is said there. Write it as a l
 | `"deposit@2+0.1"` | The second time, 0.1 s later                                         |
 | `1.8` (a number)  | Seconds from the part's start                                        |
 
-Matching ignores case and punctuation; a reference can be a phrase of several words; Chinese and Japanese match character by character, consecutively. References resolve against the part's own words, after timing; with `say` or `saying` they are found in the line first, so a misheard word still lands where it is said. A reference the part does not say, or one in a part without speech, reports AK-T004. Words that differ by language belong in messages (`<prefix>.<part>.cue.<name>`), one per language: `l2At: s("launch-film.hook.cue.l2")`.
+Matching ignores case and punctuation; a reference can be a phrase of several words; Chinese and Japanese match character by character, consecutively. References resolve against the part's own words, after timing; with `say` or `saying` they are found in the line first, so a misheard word still lands where it is said. A reference the part does not say, or one in a part without speech, reports AK-T004.
+
+### Anchors
+
+A word reference breaks when the line is reworded, and its word differs by language. An anchor does neither: it is a name written in the line itself, in each language's script, and the code refers to the name.
+
+```yaml
+# script.en.yaml
+- id: how
+  say: "@{step1}Paste your form link. We @{step2}match the answers you @{have}already have@{/have}."
+# script.zh-cn.yaml
+- id: how
+  say: "@{step1}粘贴表单链接，我们@{step2}匹配你@{have}已有的答案@{/have}。"
+```
+
+```ts
+part({
+  key: "how",
+  speech: say(s("launch-film.how.say")), // or take(…).saying(s(…))
+  sounds: [{ at: "@step1", sound: "tick" }],
+  layers: [statement({ at: "@have", until: "@/have", text: s("launch-film.how.title") })],
+});
+```
+
+| In the script        | In the code                 | Meaning                                                         |
+| -------------------- | --------------------------- | --------------------------------------------------------------- |
+| `@{name}`            | `"@name"`                   | A point: the start of the word after it (after the last word, where that word ends) |
+| `@{name}…@{/name}`   | `"@name"` and `"@/name"`    | A stretch: the start of its first word, and the end of its last |
+|                      | `"@name+0.2"`, `"@/name-0.1"` | Shifted by seconds                                              |
+
+- An anchor reference works wherever a word reference does. It is looked up in the line the part says, so the part's speech must come from that script text: `say(s("<id>.<part>.say"))` or `take(…).saying(s("<id>.<part>.say"))`. A name the line does not have, the end of a point, or a line's anchor in a part without speech reports AK-T004; give every language's line the same names.
+- **A part's own anchors** are seconds it gives itself, so a part needs no speech to have them: `part({ key: "demo", dur: 18, anchors: { press: 7.1, map: [9.6, 13.4] } })`. A number is a point, `[from, to]` a stretch, both from the part's start; `"@press"`, `"@map"`, `"@/map"` and `"@press+0.2"` then work as above (a layer's `at` and `until`, a sound's `at`, `still`, `ctx.at("@press")` in a layer's code), never outside the part. A name is the line's or the part's own, not both (AK-T004; the part's own is used).
+- `allyhub frames --at` and `allyhub inspect --at` take anchors by name beside seconds (`--at @press,@/map,@press+0.2`): the place each landed in the film, looked up in `--part` when given, else in the one part that has the name.
+- A name has letters, digits, `_` and `-`, and is there once in a line; stretches may overlap. A name written twice, an end without a start, a stretch with no words in it and an anchor in a plural are AK-M007.
+- An anchor lands by the line's letters matched to the words of its sound, the same way a word reference does: a misheard word still lands where it is said. Before a `say` has its file, it is placed in proportion along the line.
+- `allyhub timeline` prints where each anchor landed (`anchors: @step1 9.07, @have 11.20 – 12.05`), and `timeline.parts[].anchors` has the same in film seconds.
+- An anchor goes before a `<shown|said>` piece, not inside it.
+- The person can drag an anchor along the preview's timeline: it goes to the nearest word and the script's line is written at once, the same words with the anchor elsewhere. Read the script again before you change a line.
+- On the preview page the person sees a small flag with the anchor's name, never its text, and their edits move it with the words it is on: typing over an anchored word keeps the anchor on the new word, and an anchor whose words were cut stays at the place they were. An edit the person sends shows each line as written, anchors included: put an anchor that lost its words where the picture should now land, or remove it and what refers to it. A `<shown|said>` piece is drawn as it is shown, with how it is said small beside it; the person changes what it shows, so a piece they typed over (`<14|twelve>`) needs its said side written again, and one they deleted is gone from both.
 
 ## Durations
 
@@ -556,7 +723,7 @@ Matching ignores case and punctuation; a reference can be a phrase of several wo
 
 ## Layers
 
-A part's layers are drawn back to front in the order they are listed, footage and graphics alike, each over the whole frame unless it says otherwise: a layer is over every layer listed before it. So graphics listed after the footage are over it (the usual talking head: `[footage(), captions()]`), a graphic layer listed before a footage layer is under it (a card behind a video in a box: `[card(), footage(demo, { box, radius: 24 }), badge()]`), and one between two footage layers is between them. The preview, `allyhub still`, `frames` and the render all draw that order, and `allyhub timeline` prints it for a part that mixes them (`drawn back to front: card → footage media/demo.mp4 → badge`). A graphic layer under footage that fills the frame is hidden: `allyhub inspect --kind graphics-under-footage` lists the graphic layers that have footage over them and how much of the frame it covers. Every layer takes `at` and `until` (word references or seconds from the part's start) or `dur` (seconds from `at`); by default it lasts the whole part.
+A part's layers are drawn back to front in the order they are listed, footage and graphics alike, each over the whole frame unless it says otherwise: a layer is over every layer listed before it. So graphics listed after the footage are over it (the usual talking head: `[footage(), captions()]`), a graphic layer listed before a footage layer is under it (a card behind a video in a box: `[card(), footage(demo, { box, radius: 24 }), badge()]`), and one between two footage layers is between them. The preview, `allyhub still`, `frames` and the render all draw that order, and `allyhub timeline` prints it for a part that mixes them (`drawn back to front: card → footage assets/media/demo.mp4 → badge`). A graphic layer under footage that fills the frame is hidden: `allyhub inspect --kind graphics-under-footage` lists the graphic layers that have footage over them and how much of the frame it covers. Every layer takes `at` and `until` (word references or seconds from the part's start) or `dur` (seconds from `at`); by default it lasts the whole part.
 
 ### Footage `footage`
 
@@ -593,7 +760,7 @@ footage(screen, { crop: [0, 0, 0.5, 1], speed: 2 }); // the left half of the pic
 footage({ background: { blur: 24 } }); // the room out of focus
 footage({ background: { dim: 0.4, desaturate: 1 } }); // darker and gray, the speaker in colour
 footage({ background: { color: "var(--ak-color-bg)" } }); // a flat colour instead
-footage({ background: { image: "./media/studio.jpg", blur: 6 } }); // an image instead
+footage({ background: { image: "../../assets/media/studio.jpg", blur: 6 } }); // an image instead
 footage({ background: { color: "transparent" } }); // the person alone
 ```
 
@@ -621,9 +788,9 @@ The preview plays footage in step with the rest, placed by the same numbers the 
 A separate microphone and a camera, or a screen recording and a webcam, start at different moments and run on different clocks. `allyhub sync <reference> <other> [more files…]` measures the offset between them from their sound (cross-correlation, to well under a millisecond). It only measures: writing the offset into the piece is yours.
 
 ```
-$ allyhub sync media/mic.wav media/cam.mp4 --fps 30
-media/cam.mp4 against media/mic.wav: offset +1.500004 s (+45.00 frames at 30 fps), at 2.055 s of media/mic.wav.
-  A moment at t s of media/mic.wav is at t + 1.500004 s of media/cam.mp4.
+$ allyhub sync assets/media/mic.wav assets/media/cam.mp4 --fps 30
+assets/media/cam.mp4 against assets/media/mic.wav: offset +1.500004 s (+45.00 frames at 30 fps), at 2.055 s of assets/media/mic.wav.
+  A moment at t s of assets/media/mic.wav is at t + 1.500004 s of assets/media/cam.mp4.
   Peak: 98.4 × the RMS of the correlation over every offset searched (the whole of both); the next peak more than 0.05 s away is 22.12 × lower, at offset −1.359 s; polarity the same; 4.111 s of common sound.
   Windows (…): at 0.41 s  +1.500001 s  peak 85.0 ×  0.067 ms wide  correlation 0.851  levels −28.9 / −22.7 dBFS  +0.002 ms off the line …
   Drift: +2.44 ppm, from 5 windows over 3.288 s (…): offset(t) = 1.499999 + 2.4371e-6 × t, t in seconds of the reference. The other file played at speed 1.00000244 keeps step with it.
@@ -643,15 +810,15 @@ media/cam.mp4 against media/mic.wav: offset +1.500004 s (+45.00 frames at 30 fps
 **Using the offset.** The microphone is the part's speech and the camera is its picture:
 
 ```ts
-// allyhub sync media/mic.wav media/cam.mp4  →  offset +1.500004 s
+// allyhub sync assets/media/mic.wav assets/media/cam.mp4  →  offset +1.500004 s
 const OFFSET = 1.500004;
 part({
   key: "intro",
-  speech: take("./media/mic.wav").range("So here is", "every time"),
+  speech: take("../../assets/media/mic.wav").range("So here is", "every time"),
   // `from` is the camera's moment at the layer's start: the take's moment there, plus the offset.
   // allyhub timeline --json gives the part's start and its speech { start, from }:
   // the take's moment at the part's start is speech.from − (speech.start − part.start).
-  layers: [footage("./media/cam.mp4", { from: 12.84 + OFFSET })],
+  layers: [footage("../../assets/media/cam.mp4", { from: 12.84 + OFFSET })],
 });
 ```
 
@@ -695,7 +862,7 @@ custom({
 | `ctx.dur`          | The part's length in seconds, once timed                                                          |
 | `ctx.layer`        | `{ start, end }`: this layer's window, seconds from the part's start                              |
 | `ctx.words()`      | The part's words on its own clock (`[{ w, start, end }]`), for captions and karaoke-style layers  |
-| `ctx.at(ref)`      | Seconds from the part's start of a word reference                                                 |
+| `ctx.at(ref)`      | Seconds from the part's start of a word reference or an anchor (`"@name"`)                        |
 | `ctx.captions(opts?)` | The caption cues shown over this part, on its clock: `[{ start, end, text, words: [{ w, start, end }] }]`, spelled as the script; `opts` `{ maxChars?, maxWords?, keep? }` cut them (see Captions) |
 | `ctx.face(t, id?)` | Where a face is at part time `t`, `[x, y, w, h]` in the frame's pixels, from the face track of the topmost footage showing then that has one: face `id`, by default that footage's speaker; `undefined` when none shows |
 | `ctx.faces(t)`     | Every face at part time `t`: `[{ id, box }]`, from the same footage; empty without one |
@@ -744,7 +911,7 @@ part({
 
 A face track and a person matte are what AllyHub learns from a video once, on this computer, and keeps in the project's media index (`.allyhub/cache/index/<sha256 of the file>/`). An output reads the face track of a take under a face reframe, under its own graphics (the `text-speaker` fact) and for `ctx.face(t)` and `ctx.faces(t)`; it reads the person matte for layers drawn `z: "behind-person"` and for a footage layer's `background`. When one is missing, `allyhub check`, `allyhub render` and `allyhub dev` make it before going on (no cost; the first time downloads the runtime and models, about 290 MB, into `~/.allyhub/`), with progress on stderr or on the preview page, which reloads when it is done. `--no-index` (or `ALLYHUB_NO_INDEX=1`) skips that: the reframe is centred, layers behind the person draw in front and a footage layer's background is left as it is, each reported as a `fallback` fact. `allyhub index <video> [--faces] [--matte]` makes them by hand.
 
-`allyhub index`, `transcribe`, `transcript` and `edits` keep what they measure of a file in the media index of the workspace it belongs to: the nearest folder above the file with `allyhub.config.ts`, `messages/`, `app/videos/` or `app/decks/`; else the current folder's; else, by a `.allyhub/` folder alone, the current folder's, then the file's; else the current folder. They print which (`workspace` in `--json`), warn on stderr when it is not the current folder's workspace or none was found, and `--dir <workspace>` names it.
+`allyhub index`, `transcribe`, `transcript` and `edits` keep what they measure of a file in the media index of the workspace it belongs to: the nearest folder above the file with `allyhub.config.ts` or `content/`; else the current folder's; else, by a `.local/` folder alone, the current folder's, then the file's; else the current folder. They print which (`workspace` in `--json`), warn on stderr when it is not the current folder's workspace or none was found, and `--dir <workspace>` names it.
 
 ## Captions
 
@@ -766,7 +933,7 @@ Text over the speaker's face box or person matte is a `text-speaker` fact. `srt`
 
 ## Checks and facts: `allyhub check`, `allyhub inspect`
 
-`allyhub check` reports problems only for what is wrong whatever the taste (a missing file, a duplicate key, an exception, an invalid format, non-determinism, a hard platform limit, a declared limit such as `maxDuration` or `differ`); must-fix problems stop a render. What needs judging it measures instead: **facts**, which never block anything. `check` prints how many there are; `check --json` has them as `facts`.
+`allyhub check` reports problems only for what is wrong whatever the taste (a missing file, a duplicate key, an exception, an invalid format, non-determinism, a hard platform limit, a declared limit such as `maxDuration` or `differ`); must-fix problems stop a render. What needs judging it measures instead: **facts**, which never block anything. `check` prints how many there are; `check --json` has them as `facts`. For a video with text it also prints one line of the text facts' ends, as measured and without a verdict: of the texts that are ever whole, the one with the least seconds per word (with its words, its seconds and where it is); how many texts are never whole; and the most words whole at once in a part (`Text on screen, 14 texts timed: least time per word 0.25 s ("…", 6 words whole for 1.50 s; film · 9x16 · demo · 6.00 s); 1 text never whole; most words whole at once 23 (6.00–7.20 s; …)`).
 
 `allyhub inspect [folder] [--piece --output --combo --format] [--kind k,k] [--part key] [--from s] [--to s]` prints the facts (it runs the check, which reloads only what changed): each finding once per version with its time range and its largest value; `--json` gives every fact as `{ kind, piece, output, combo, format, part, t, data }` (film seconds; boxes `[x, y, w, h]` in the frame's pixels; shares 0–1). `--at s,s` measures one output now at those moments (from `--part`'s start when given; the first combo and format unless chosen), `--every s` at every so many seconds (through `--part`, or `--from` to `--to`, else the whole output), and `--texts` also lists every block of text at every moment. Text is measured at each part's still, the middle of every layer and caption cue, every second of each part and its last frame (a layout is what its animations leave), and every second from half a second in where footage with a face track or matte shows (at most 24 moments a part, the last frame always one of them). A block's box is its lines' boxes; `ink` is what shows of its glyphs (a line's box is taller than its letters, and an ancestor's `overflow` clips), and `opacity` is given when it is under 1. Blocks of one layer, and a block against the box it is drawn inside, are compared by `ink`; text an ancestor clips away entirely is not on screen and is in no fact. The kinds:
 
@@ -778,6 +945,7 @@ Text over the speaker's face box or person matte is a `text-speaker` fact. `srt`
 | `text-overlap-own` | The same for two blocks of one layer, by their glyphs (`ink`): `a`, `b`; `area`; `share` of the smaller. A title drawn twice on purpose (a shadow copy, a two-tone word) shows here too: which it is is yours to tell |
 | `text-outside` | A block whose glyphs reach at least 1 px outside a box it is drawn inside: `text`; `container`: `{ box, paint }`, the nearest ancestor that paints a `background`, `border` or `shadow` (not one that covers the whole frame, and not one under 5 % opacity); `edges`: `{ side, px }` past each side. A chip growing out of its card, a line wider than its pill |
 | `text-time` | One per text of a part (the text a block shows longest: a counting number's settled value). `text`; `words`, `chars` (as the language breaks them, `Intl.Segmenter`); `seconds` it is whole; `spans` (`[from, to]`, film seconds); `onScreen` (seconds it shows at all); `first`; `options`: `{ every, opacity, shown }`, what whole means here: looked at every 0.2 s, every text node at 90 % opacity or more with 90 % or more of its glyphs showing. Seconds against words is yours to judge: a reading speed is taste, and a quote behind a voice-over needs less than one read in silence |
+| `words-on-screen` | One per part with a text that is ever whole: the `text-time` spans laid over each other. `words`, `chars`, `texts`: the most words whole at once, with their characters and how many blocks they are in; `from`, `until`: the first stretch that has them (film seconds; the fact's `t` is `from`); `steps`: `{ t, words, texts }`, the count from each change on, through the part; `options`: as `text-time`. A page viewport's text counts like any other. How many words can be taken in at once, and whether they arrive while something else moves, is yours to judge |
 | `footage-scale` | `file`, `source`, `shown` (crop or reframe window), `max` and `min`: `{ scale, t, from }`, output pixels per source pixel at its largest and smallest over the layer's window (`2` draws each source pixel 2 × 2), the first moment of each, and what makes it up then (the fit, `zoom` for a punch-in or pullback, `box key`); measured at the window's first and last frames and at every zoom and box key. The fact's `t` is the largest's |
 | `free-bands` | One per part whose footage has a face track or person matte. `frame`; `covered` (the format's covered edges); `content`: `{ x: [x0, x1], y: [y0, y1] }`, the frame inside them (no margin, unlike `ctx.content`); `profile`; `moments` (the part's measured moments); `face` (the speaker's face box: `files`, `speaker`, `seen` (moments it was seen in the content box's columns), `rows` (`[y0, y1]` it covered at any moment, joined), `bands`) and `person` (the person matte, opaque past half: the same, without `speaker`), each `{ missing: "face-track" \| "person-matte", files }` when the media index lacks it; `bands`: free of everything measured. A band is `{ y: [y0, y1], x: [x0, x1], height }` in pixels, across the content box; every band is listed, none too small. Raw rows, no placement: where text goes is yours |
 | `flat-frames` | `start`, `end`, `frames` (runs of nearly flat frames near cuts and cues, in a colour unlike the picture around them), `luma`, `shade`, `longer`, `transition` (`{ type, from, to }` when the run lies in a transition's window, as a dip through a colour does), `options`: the thresholds used (`maxStd` 3, the luma spread of a flat frame out of 255; `minFrames` 4; `sameLuma` 10, how close to the picture around it a run may be and still count as that picture's background); looked for on each output's first version |
@@ -790,6 +958,8 @@ Text over the speaker's face box or person matte is a `text-speaker` fact. `srt`
 | `fallback` | `file`, `missing` (`face-track`; `face`, with its id in `face`; `person-matte`; `own-footage`; `tempo`), `for` (`reframe`, `speaker`, `behind-person`, `background`, `snap`), `fallback` (`centred`, `in-front`, `unprocessed`, `not-snapped`) |
 
 The preview page's Measurements button draws the text facts over the picture at the moment on show.
+
+**A page inside the frame: `data-ak-viewport`.** A layer that draws a screen of its own (a site demo, a mocked app window, a code panel, a page that scrolls behind a mask) holds text that is the page's, not the video's: it may run past the frame or under a covered edge on purpose, cut by the window it is in. Put the attribute `data-ak-viewport` on that window's element (`el.dataset.akViewport = ""`), and the text inside it is left out of what assumes a line belongs to the frame: "goes off the frame" (AK-L002), characters no font can draw (AK-L003), and the `text-covered` and `text-outside` facts. It is still measured otherwise (`text-time`, `text-overlap`, `--texts`), and text cut off by a box of its own with `overflow: hidden` is still AK-L002. Nothing sets it for you; without it every text node is the frame's.
 
 **Motion and loops, measured on demand.** Two more modes measure one output now (the first combo and format unless chosen) and print no facts:
 
@@ -867,6 +1037,7 @@ A component must draw the same frame at the same moment: `render(t)` sets every 
 | `layout(ctx, opts?)`              | `{ W, H, k, orient, pad, top, bottom, left, right }`: the type scale `k` and the content box's edges in pixels (`right` and `bottom` are x and y, not widths); `opts` `{ margin, topGap, bottomGap }` changes its defaults (see The content box) |
 | `text(v)`, `list(v)`              | A prop as a string (a number or boolean as text; anything else `""`), and as a list of strings (one value becomes a list of one) |
 | `textBlock(value, { size, weight?, color?, font?, lineHeight?, align? })` | A `div` of text that wraps by width, keeps words together (Chinese broken only between words) and balances its lines; defaults weight 700, `var(--ak-color-fg)`, `var(--ak-font-display)`, line height 1.15, left |
+| `marked(line, styles?)`           | A `span` with a line's marks drawn (see Marks in a line): a plain run as text, a marked run as a `span` with `data-mark` (its kinds: `"strong"`, `"strong em"`…), so `render` can find a stressed run and move it on its own. `line` is a string (read with `readMarks`) or a text already read (`{ text, marks }`). Each kind's style is `styles[kind]`, else `MARK_STYLES[kind]`: `strong` weight 700 (nothing to see in a line already that heavy: give a colour or a weight of your own), `em` `var(--ak-color-accent)`, `strike` a line through, `code` `var(--ak-font-mono)` at 0.9 em. Chinese gets the same word breaks as `textBlock`; append it to any block (`const el = textBlock("", { size }); el.append(marked(s(key), { strong: { color: "#ffdf20" } }))`) |
 | `eyebrow(value, size)`            | A small uppercase label in `var(--ak-color-accent)` and `var(--ak-font-body)` |
 | `wordBreaks(value)`               | Chinese text with zero-width spaces between its words (the browser's own word segmenter), so `word-break: keep-all` breaks lines only between words; other text unchanged |
 | `contentBox(L, style?)`           | An absolutely placed flex column over `layout()`'s content box, centred vertically; `style` overrides |
@@ -903,37 +1074,361 @@ Set styles however you like: `h`/`css` (numbers become pixels), or `el.style` di
 
 ## Starter components (`allyhub add`)
 
-The SDK has no components of its own. AllyHub keeps a set of starter components, and `allyhub add` copies their source into the workspace, where they are the workspace's own code like any component you write:
+The SDK has no components of its own. AllyHub keeps a few starter components, and `allyhub add` copies their source into the workspace, where they are the workspace's own code like any component you write:
 
 ```bash
 allyhub add                          # list them
-allyhub add titleCard siteStep       # copy them into app/components/
-allyhub add siteStep --to components # another folder
-allyhub add siteStep --force         # put the starter version back over your changes
+allyhub add screenDemo codePanel     # copy them into components/
+allyhub add screenDemo --to content/launch/film # another folder
+allyhub add screenDemo --force       # put the starter version back over your changes
 ```
 
-- A copy imports only `@allyhub/sdk` and `@allyhub/sdk/dom`, so it stands alone. Import it with a relative path: `import { siteStep } from "../components/site-step.js"`.
+- **They are mechanisms, not layouts.** Each does something a piece would otherwise have to work out again: a camera over a screen with a cursor, typing and a press; code with its tokens, typed or revealed; marks that follow another layer's elements and lines routed between them; a chart's scales; captions timed to the words. There is no title card, list, quote, price table, lower third or end card among them: those are a few lines of `custom()` with the DOM helpers (`textBlock`, `fitTo`, `rise`, `marked`, `countText`), and how they look is the piece's own.
+- A copy imports only `@allyhub/sdk` and `@allyhub/sdk/dom`, so it stands alone. Import it with a relative path from the entry file: `import { screenDemo } from "../../components/screen-demo.js"` in `content/<name>/video.ts`.
 - Change a copy freely: colors, layout, timing, sounds, new props. Nothing upstream overwrites it; `allyhub add` refuses to replace a copy that has changes unless you pass `--force`.
-- When none fits, write your own with `defineComponent` or `custom` (above), starting from a copy if one is close. Video is not a component: it is a `footage()` layer.
-- A piece that still imports `@allyhub/sdk/components` gets AK-B006: copy the components it uses with `allyhub add` and import them from there.
+- When none fits, write your own with `defineComponent` or `custom` (above). Video is not a component: it is a `footage()` layer.
+- A piece that still imports `@allyhub/sdk/components` gets AK-B006: import its components from the project.
 
 | Component      | Purpose                    | Main props                                                                                                                                                  |
 | -------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `titleCard`    | Title card                 | `eyebrow`, `line1`, `line2`, `l2At` (a word reference)                                                                                                      |
-| `statement`    | One sentence               | `text`, `emphasis`                                                                                                                                          |
-| `bulletList`   | Bullet list                | `title`, `items`, `itemAt[]` (word references)                                                                                                              |
-| `compareCards` | Comparison cards           | `left`, `right` (each with `title` and `items`), `better` (`"left"` or `"right"`: drawn in the accent colour; default neither)                            |
-| `bigNumber`    | Highlighted number         | `value`, `label`, `countFrom`                                                                                                                               |
-| `chart`        | Chart                      | `kind` (`bar`, `line`), `data` (`[{ label, value }]`), `highlight`, `title`                                                                                 |
-| `timeline`     | Timeline                   | `events[]` (`{ date, title }`), `title`                                                                                                                     |
-| `quoteCard`    | Customer testimonial       | `quote`, `name`, `role`, `avatar`                                                                                                                           |
-| `priceCard`    | Pricing                    | `plans[]` (`{ name, price, period?, features?, highlight? }`), `title`                                                                                      |
-| `siteStep`     | One step of a website demo | `page` (a web page screenshot with `.elements.json`), `title`, `focus`, `typeInto`, `typed`, `clickOn`, `checksAt`; the times `zoomAt`, `typeAt`, `clickAt` |
-| `endCard`      | Closing call to action     | `lines`, `cta`, `url`, `logo`                                                                                                                               |
-| `lowerThird`   | Who is speaking            | `name`, `role`, `y` (where its foot sits in the content box, 0–1; default at its foot)                                                                     |
+| `screenDemo`, `uiDemo` | A demo played on a screen: a screenshot, or an interface drawn in code | `steps[]` (`zoom`, `highlight`, `move`, `click`, `type`, `show`, each `at` a moment), `box`, `tint`, `frame`, `camera`, `depth`, `cursor`, `typing`, `press`, `enter`; `page` (a screenshot), or `size`, `build`, `update`: see below |
 | `captionWord`  | Captions: one word at a time | `stress` (words bigger, in the accent colour), `emoji` (`{ word: "🎁" }`, above the word), `y` (0–1 in the content box, default 0.8)                     |
 | `captionLine`  | Captions: a highlighted line | `stress` (words in the accent colour), `y` (default 0.82); an accent box slides to the word being said                                                  |
 | `captionSubtitle` | Captions: a quiet subtitle | `y` (where its bottom sits, default 1)                                                                                                                  |
+| `chart` | One number story: bars, horizontal bars, a line or a ring | `kind`, `data` (`[{ label, value }]`), `title`, `highlight`, `annotation`, `growAt`, `highlightAt`, `values`, `format`, `box`, `scale`, and its groups: see below |
+| `codePanel` | Code, data or a terminal in a panel | `code`, `lang` (`json`, `ts`, `python`, `bash`, `http`), `kind` (`terminal`), `reveal` (`type`, `lines`, `none`), `start`, `end`, `steps[]` (`lines`, `find`, `key`, `value`, `scroll`), `title`, `badge`, `status`, `theme`, `box`, `overflow`, and its groups: see below |
+| `callout` | Marks places, labels them, draws lines between them | `marks[]` (`target`: a selector or a box; `kind`: `outline`, `highlight`, `brackets`; `at`, `until`, `settleAt`, `label`, `side`), `links[]` (`from`, `to`, `fromSide`, `toSide`), `settle`, `box`, and the groups `mark`, `label`, `link`, `done`, `veil`, `motion`: see below |
+
+### `screenDemo` and `uiDemo`: a demo played on a screen
+
+One file, two ways to give it a screen. Both play the same demo: a window in the frame, a camera that goes in on what is acted on, a cursor that travels and clicks, text typed into a field, a button pressed. One idea runs through it: **what is acted on comes forward and stays sharp, and the rest of the screen goes soft and pale.** A click makes its target dip and darken, then spring back as a soft glow leaves its outline; nothing covers what it points at.
+
+- **`uiDemo`**: the interface drawn in DOM by the piece. It is sharp at any zoom, the typed text is in the interface's own face and size, and a step names a real element by selector. Draw the product's screen in code when you can: it is the better way.
+- **`screenDemo`**: a screenshot, whose named elements are cut out of the image to move. For a real page you cannot redraw.
+
+```bash
+allyhub add screenDemo
+```
+
+```ts
+import { uiDemo } from "../../components/screen-demo.js";
+
+part({
+  key: "paste",
+  dur: 8.5,
+  anchors: { zoom: 0.3, type: 1.45, press: 5.2 },
+  layers: [
+    backdrop, // yours: it draws the window and nothing round it
+    uiDemo({
+      size: [1440, 900], // the interface's own size, in CSS px
+      tint: "#2F5BEA",
+      frame: { url: "tidyform.com" },
+      build(page) {
+        page.append(signUpPage()); // your DOM: h() from @allyhub/sdk/dom, classes to find things by
+      },
+      update(page, t) {
+        // what the interface itself does over time: here, the answers a click brings
+        page.querySelectorAll<HTMLElement>(".answer").forEach((row, i) => {
+          row.style.opacity = String(progress(t, 6.5 + i * 0.16, 0.45));
+        });
+      },
+      steps: [
+        { at: "@zoom", zoom: [".url", ".go"] }, // the part's anchors, or seconds
+        { at: "@type", type: ".url", text: "northwind.io/signup", placeholder: ".hint" },
+        { at: "@press", click: ".go" },
+        { at: "@press+0.55", zoom: "page" },
+      ],
+    }),
+  ],
+});
+```
+
+`uiDemo(options)` is a layer (a `custom()` one, so it also takes `at`, `until` and `dur`): `build(page)` runs once, and `update(page, t)` on every frame with `t` in seconds from the part's start. A step's `at` is a word reference, an anchor or seconds from the part's start, as everywhere. What a step names is moved with `transform`, lit with `filter` and raised with `z-index`: those three are the demo's on that element. Its ancestors inside the page must have no `transform`, `opacity`, `filter` or `z-index` of their own, or it cannot rise over the rest. The rest of the page is blurred branch by branch, so text set directly in an element that also holds a named element stays sharp: give such text an element of its own.
+
+```ts
+import { screenDemo } from "../../components/screen-demo.js";
+import page from "../../assets/media/app.png"; // allyhub asset capture … --scale 2
+
+screenDemo({
+  page,
+  frame: { url: "example.com/app" },
+  steps: [
+    { at: "@zoom", zoom: ["search", "run"] },
+    { at: "@type", type: "search", text: "invoices from March" },
+    { at: "@run", click: "run" },
+    { at: "@done", show: results, zoom: "page" },
+  ],
+});
+```
+
+`allyhub asset capture <url or HTML file> --out <name.png>` writes the screenshot and, beside it, `<name>.elements.json`: each named element's box, `[x, y, w, h]` in the image's pixels. Elements are the page's own `[data-el]` attributes and each `--el name=selector` (CSS, `text=…`, `:has-text(…)`); `--click selector` clicks first (close a banner, open a menu), `--wait ms` waits, `--full` takes the whole page, `--width` and `--height` set the viewport (1440 × 900). `--scale 2` draws the page as a high-density screen does (1 to 4, default 1): the camera goes in on the image, so capture at 2. A screenshot's field is typed over (its own ground, from a column of the image, covers the placeholder) in the face `typing.font`, and what comes forward is cut out with corners of `depth.radius`: match both to the page. `screenDemo`'s `at` and `until` are moments: word references, anchors or seconds from the part's start.
+
+A place is a selector (`uiDemo`), or an element's name or a box in the image's pixels (`screenDemo`); `"page"` is the whole screen. A step may hold several of these keys:
+
+| Step key | What happens |
+| --- | --- |
+| `zoom: place` or `[places]` | The camera goes in on them as one, until they fill `camera.fill` of the frame (or `scale` times the whole-window view; never past `camera.maxScale`). They come forward (a little larger, a shadow under them) and the rest goes soft, until the next `zoom`. `lift: false` goes in without that. `zoom: "page"` is the whole window again |
+| `highlight: place` or `[places]`, `until?` | The same coming forward, without the camera moving, until `until` (default 2.4 s later) |
+| `move: place` | The cursor arrives there at `at` |
+| `click: place` | The cursor arrives and presses: it shrinks, what is there dips and darkens, a soft light spreads inside it from the cursor's tip; let go, both spring back and a line leaves its outline. Coming over it, the thing rises and brightens a little |
+| `type: place`, `text` | The cursor clicks into the field at `at` and draws back below it, off the text. The field takes the focus (a line round it, a ring that springs out); after `typing.delay` the text is typed, each letter rising into place, the caret gliding; the placeholder goes at the first key (`placeholder`: its selector inside the field, default `[data-placeholder]`). A check appears at the field's far end when the text is whole. The focus goes at the next press |
+| `show: image`, `fade?` | `screenDemo`: another state of the screen (a screenshot the same size) replaces the one showing |
+| `dur`, `ease` | The seconds and the curve of this step's camera or cursor move: `"camera"`, `"arrive"`, `"drift"`, `"linear"`, or `[x1, y1, x2, y2]`, a cubic-bezier as CSS writes it |
+
+The cursor makes no sound, and neither does a key: place them with the part's `sounds` at the same moments. A blur in a fast camera move is the output's `motionBlur` (`{ samples: 8, shutter: 0.5 }` is enough).
+
+Every value is an option; `SCREEN_DEMO_DEFAULTS` in the file has the same numbers. Lengths are px at 1080p unless said.
+
+| Option | Default | |
+| --- | --- | --- |
+| `box` | `[0, 0, 1, 1]` | Where the window is in the whole-window view, as fractions of the content box. It is as wide as the box: in the middle of it when shorter, else hung from its top and running off below |
+| `tint` | the look's accent | The colour of what the demo adds: the focus line and ring, the caret, the check, a halo with no colour of its own |
+| `frame.kind`, `theme` | `"browser"`, `"light"` | `"browser"` (a bar with `url`), `"window"` (a bar with `title`), `"none"`; `"dark"`. `barColor`, `pillColor`, `textColor`, `borderColor`, `background` replace the theme's colours |
+| `frame.bar`, `radius`, `lights`, `shadow` | 52, 19, `"mono"`, 1 | The bar's height, the corners, the three buttons (`"mono"`, `"color"`, `false`), the shadow's strength |
+| `camera.fill`, `maxScale` | 0.88, 2.6 | How much of the frame what a `zoom` goes in on may take, and the most it goes in |
+| `camera.dur`, `ease`, `creep` | 1.4 s, `"camera"`, 0.008 | A move's seconds and curve; and it never quite stops: how much it goes on in each second it holds (0: still) |
+| `depth.lift`, `shadow` | 0.04, 1 | How much larger what comes forward gets, and its shadow |
+| `depth.blur`, `fade`, `wash` | 4, 0.45, the page's ground | The rest's blur, and how far it fades towards `wash` |
+| `depth.radius` | 14 | `screenDemo`: the corners of what is cut out of the image |
+| `cursor` | | `false`: no cursor |
+| `cursor.size`, `grow` | 58, 0.65 | Its height in the whole-window view, and how much of the camera's zoom it takes on |
+| `cursor.from` | `[0.68, 0.93]` | Where it waits before its first move, as fractions of the frame |
+| `cursor.dur`, `durMin`, `durMax`, `ease`, `bow` | by distance, 0.6 s, 1 s, `"arrive"`, 0.13 | A move's seconds (from `durMin` for a hop to `durMax` across the frame, unless `dur`), its curve, how far its path bows |
+| `cursor.aim`, `aimField`, `rest` | `[0.7, 0.8]`, `[0.62, 0.66]`, 0.86 | Where on a thing and on a field it lands, as fractions of them (low and right, so the arrow hangs off and covers no label), and how far below a field it draws back to, in field heights |
+| `cursor.color`, `outline`, `shadow`, `press` | `#10131A`, `#ffffff`, 1, 0.16 | |
+| `typing.cps`, `delay` | 10, 0.58 s | Keys a second on average (a burst for a word, a breath before a mark), and the wait after the click |
+| `typing.color`, `weight` | the field's own (`#10131A` on a screenshot), 500 | |
+| `typing.font`, `size`, `padX` | the body font, 0.33, 0.31 | `screenDemo`: the typed text's face, and its size and left padding as shares of the field's height |
+| `typing.rise`, `riseDur` | 0.21, 0.09 s | How far a letter rises as it lands, a share of its size |
+| `typing.ring`, `ringWidth`, `ringReach`, `ringStrength` | `tint`, 0.031, 0.078, 0.24 | The focus line and ring, as shares of the field's height |
+| `typing.caret`, `check` | `tint`, `true` | |
+| `press.dip`, `darken` | 0.05, 0.16 | How far what is pressed dips and darkens |
+| `press.hover`, `brighten` | 3, 0.08 | How far it rises and brightens as the cursor comes over it |
+| `press.bloom` | 0.5 | The light inside it (0: none) |
+| `press.halo`, `haloReach`, `haloWidth`, `haloStrength` | the thing's own colour (else `tint`), 0.22, 0.0625, 0.55 | The line that leaves its outline, as shares of its height (strength 0: none) |
+| `enter` | `{ dur: 0.7, rise: 28, scale: 0.985 }` | How the window comes in; `false`: it is there |
+
+### `callout`: this, here, and this becomes that
+
+Marks places on screen, labels them, and draws lines between them. List it last in the part's layers: it draws over the rest.
+
+```bash
+allyhub add callout
+```
+
+```ts
+import { callout } from "../../components/callout.js";
+
+part({
+  key: "extract",
+  dur: 11,
+  anchors: { name: 1.2, price: 4, done: 8 },
+  layers: [
+    board, // yours: a product card (#p-name, #p-price) and a JSON panel (#j-name, #j-price)
+    callout({
+      settle: "next", // each pair goes quiet as the next takes over
+      veil: { opacity: 0.5, within: ".board" }, // the rest goes pale meanwhile
+      marks: [
+        { id: "name", target: "#p-name", at: "@name" },
+        { id: "name-json", target: "#j-name", kind: "highlight" },
+        { id: "price", target: "#p-price", at: "@price", settleAt: "@done", label: "From the page" },
+        { id: "price-json", target: "#j-price", kind: "highlight", settleAt: "@done" },
+      ],
+      links: [
+        { from: "name", to: "name-json" }, // page → data: the direction is yours
+        { from: "price", to: "price-json", settleAt: "@done" },
+      ],
+    }),
+  ],
+});
+```
+
+- **A place** (`target`) is a CSS selector for an element another layer of the part drew, or a box `[x, y, w, h]` in the frame's pixels. A selector is read on every frame, so the mark follows the layout and anything that moves it; one that finds nothing draws nothing, and neither do its label and its lines.
+- **A mark** comes on at `at` and is one of three `kind`s: `outline` (a line that travels round the place, with the element's own corners), `highlight` (a band wiped across it, for a line of code or a value) and `brackets` (four corners, for a large region). `label` is a short text beside it, on the first of `side` (one side, or several in order of preference) that has room: inside `box`, off its own place, off other marks, labels and lines. `until` is when it has gone; `pad`, `radius` and `color` are its own.
+- **A link** draws a line from the mark `from` to the mark `to` (their `id`s), leaving and arriving square to an edge, routed round both places unless `fromSide` and `toSide` name the edges. One moment is enough for a pair: without an `at` of its own the line leaves as its mark closes, and the mark it arrives at comes on as it lands, from the edge it lands on.
+- **Quiet.** With `settle: "next"`, marks joined by links are a group, and a group goes quiet (thinner, paler, its label a pale chip) when the next one starts; `settleAt` says when for one mark or line.
+- **The veil** (`veil.opacity`, 0 by default) fades everything inside `veil.within` (a selector; default the frame) towards `veil.color`, except the places being shown. Give it the colour of the ground it covers.
+- Every moment is a word reference, an anchor or seconds from the part's start. It makes no sound.
+
+Every value is a prop, in six groups; `CALLOUT_DEFAULTS` in the file has the same numbers. Lengths are px at 1080p.
+
+| Prop | Default | |
+| --- | --- | --- |
+| `box` | `[0, 0, 1, 1]` | Where labels may go, as fractions of the content box |
+| `settle` | `"none"` | `"next"`: a group goes quiet when the next takes over |
+| `mark.kind`, `color`, `width` | `"outline"`, the accent, 3 | |
+| `mark.pad`, `radius` | 10, 8 | Room round the place (`pad` on a mark: a number, or `[x, y]`), and the least corner radius |
+| `mark.fill`, `flash` | 0.05, 0.16 | An outline's and brackets' tint, at rest and as they land |
+| `mark.highlight`, `highlightFlash` | 0.13, 0.3 | A highlight's band, at rest and as it lands |
+| `mark.halo`, `haloOpacity` | 5, 0.18 | The pale ring round an outline |
+| `mark.glow`, `glowBlur`, `glowOpacity` | 16, 22, 0.4 | The glow that leaves a mark as it lands |
+| `mark.lift` | 7 | How much larger a mark starts, before it settles |
+| `mark.bracket`, `bracketShare` | 26, 0.3 | A bracket's arm, and the most of a side it takes |
+| `label.side`, `align`, `gap` | top, bottom, right, left; `"start"`; 12 | The order sides are tried in, where it sits along a top or bottom edge, its distance |
+| `label.size`, `weight`, `font`, `tracking` | 28, 600, the body font, −0.005em | |
+| `label.color`, `background` | `#FFFFFF`, the accent | |
+| `label.padX`, `padY`, `radius` | 16, 8, 10 | |
+| `label.shadowY`, `shadowBlur`, `shadowColor` | 8, 24, `rgba(2, 4, 16, 0.22)` | |
+| `label.rise`, `scale` | 12, 0.9 | How far it rises as it comes, and the size it starts at |
+| `link.color`, `width`, `halo`, `haloOpacity` | the accent, 3, 4, 0.14 | The line and the pale line under it |
+| `link.start`, `end` | `"dot"`, `"arrow"` | Its ends: `"dot"`, `"none"`; `"arrow"`, `"dot"`, `"none"` |
+| `link.dot`, `arrow`, `arrowAngle` | 5.5, 13, 34° | |
+| `link.startGap`, `endGap` | 0, 10 | Its distance from the marks' edges |
+| `link.bend`, `minBend` | 0.5, 36 | How far it runs straight before it turns |
+| `link.head`, `headGlow`, `headOpacity` | 5, 20, 0.7 | The light that travels at its tip |
+| `done.color`, `opacity`, `weight`, `fill` | the accent, 0.45, 0.67, 0.6 | The quiet state: its colour, and how much of the strength, the line's width and the tint stay |
+| `done.labelBackground`, `labelColor` | the accent at 12 % on white, the accent | A quiet label |
+| `veil.opacity`, `color`, `within`, `radius` | 0, the look's background, the frame, 0 | |
+| `motion.draw`, `link` | 0.55 s, 0.7 s | A mark's drawing, a line's travel |
+| `motion.labelDelay`, `label` | 0.3 s, 0.4 s | |
+| `motion.settle`, `out`, `flash` | 0.5 s, 0.3 s, 0.7 s | Going quiet, fading before `until`, the answer as a mark lands |
+| `motion.curve` | `[0.62, 0, 0.18, 1]` | The curve of every move, a cubic-bezier as CSS writes it |
+| `motion.spring`, `damping`, `frequency` | 0.7 s, 6, 1.5 | The spring a mark settles on |
+
+A label's side and a line's route are worked out on every frame, so a place that travels far while its mark is on can change them mid-shot: name the sides to hold them. Labels keep off marks, labels and lines, not off what other layers drew: name a side where that matters. Lines between two stacks one above the other cross unless one stack's order is reversed.
+
+### `codePanel`: code, data or a terminal in a panel
+
+Plain text in, a panel that reads as an editor, a response viewer or a terminal out: its tokens coloured, brought in over time, with steps that direct the eye.
+
+```bash
+allyhub add codePanel
+```
+
+```ts
+import { codePanel } from "../../components/code-panel.js";
+
+part({
+  key: "search",
+  dur: 9,
+  anchors: { type: 0.6, sent: 3.2, arrive: 3.8, score: 6 },
+  layers: [
+    backdrop,
+    codePanel({
+      title: "search.ts",
+      lang: "ts",
+      code: `await ally.search({\n  query: "refund policy",\n  rerank: true,\n});`,
+      reveal: "type",
+      start: "@type",
+      end: "@sent", // the typing is paced to end here
+      recede: { at: "@arrive" }, // it steps back as the response comes
+      box: [0, 0, 0.48, 1],
+    }),
+    codePanel({
+      at: "@arrive-0.25",
+      title: "response.json",
+      badge: "200",
+      status: { text: "42 ms", at: "@arrive+0.8" },
+      lang: "json",
+      code: RESPONSE,
+      start: "@arrive",
+      steps: [{ at: "@score", value: "score" }], // the value of "score" comes forward
+      box: [0.52, 0, 0.48, 1],
+    }),
+  ],
+});
+```
+
+- **Colouring.** `lang` is `json`, `js` or `ts`, `python`, `bash`, `http` (a first line, headers, a JSON body) or `text`; any other is plain. The tokenizers are in the file and are heuristics, not grammars: good for real snippets, wrong on some corners (a JS template string is one colour; there are no regex literals).
+- **Bringing it in.** `reveal: "type"` types it letter by letter with a caret, in bursts with pauses at marks and line ends; `"lines"` lets it arrive line by line; `"none"` has it there. `start` is when it begins (default 0.5 s into the layer) and `end`, when given, paces it to finish there. A terminal types by default, code arrives by lines.
+- **A terminal.** With `kind: "terminal"`, a line that begins `$ ` is a command (the prompt is drawn, the command typed, a pause for Enter) and the rest is its output, arriving by lines. `terminal.cues` gives each command its moment; a last line that is only `$ ` is a prompt where the caret rests.
+- **Directing the eye.** Each of `steps[]`, from its `at` until the next step's (or its `until`), highlights `lines` (one, or `[first, last]`: a tinted band that glides from range to range while the rest dims), or a span, which becomes a chip that comes forward: `find` (its text), `key` (a JSON or object key, a keyword argument), `value` (the value of that key), or `cols` (`[from, to)` in `line`); `line` and `nth` narrow the match. `scroll: n` brings line n to the top. A step with only `at` clears.
+- **For another layer to point at.** A highlighted span is an element `[data-code-span="<id or its text>"]`, each line is `[data-code-line="7"]`, the panel `[data-code-panel]`: `callout` can take them as targets.
+- **Long content.** `overflow: "fit"` (the default) shrinks the type down to `minSize`, then wraps with a hanging indent, then the rows scroll; `"wrap"`, `"scroll"` (sideways, following the caret) and `"clip"` (with a fade at the edge) are the others. `maxLines` is the most rows shown at once.
+- **Where it sits.** `box` is `[x, y, w, h]` as fractions of the content box, or one per frame shape (`{ landscape, portrait, square }`). `fit` says how the panel takes it: as wide as the box and as tall as its content by default, placed by `fit.align`.
+- **The face.** `font` defaults to the look's mono font, which is the computer's own (`ui-monospace`, SF Mono, Menlo): it differs from one computer to the next. For the same letters everywhere, add a font to the workspace (`allyhub font add "JetBrains Mono"`) and name it in `font` or in the look.
+- Every moment is a word reference, an anchor or seconds from the part's start. It makes no sound: place a key's tick with the part's `sounds`.
+
+Every value is a prop; `CODE_PANEL_DEFAULTS` in the file has the same numbers. Lengths are px at 1080p.
+
+| Prop | Default | |
+| --- | --- | --- |
+| `code`, `lang`, `kind` | required, `"text"`, `"code"` | |
+| `title`, `badge`, `status` | none | The bar's label, a pill before it (`POST`, `200`), and a note at its right end `{ text, at?, color?, dot? }` that arrives at `at` |
+| `theme`, `colors` | `"dark"`, none | `"light"`; `colors` replaces any of the theme's (each token kind, `background`, `bar`, `border`, `title`, `muted`, `accent`) |
+| `reveal`, `start`, `end` | by `kind`, 0.5 s in, none | |
+| `size`, `minSize`, `lineHeight`, `font`, `weight`, `tab` | 40, 26, 1.6, the mono font, 500, 2 | |
+| `overflow`, `wrapIndent`, `maxLines`, `lineNumbers` | `"fit"`, 2, none, `false` | `lineNumbers`: `true` or `{ from }` |
+| `fit` | `{ width: "box", height: "content", align: [0.5, 0.5], minWidth: 420, shrink: true }` | |
+| `panel` | `{ radius: 26, border: 1.5, padX: 40, padY: 30, gutter: 30, shadow: 1, sheen: 0.045 }` | The surface |
+| `bar` | `{ height: 72, lights: "mono", lightSize: 13, size: 23, weight: 500, align: "left", … }` | The title bar; `false`: none |
+| `typing` | `{ cps: 22, jitter: 0.45, seed: 1, linePause: 5, punctPause: 1.7, wordPause: 1.3, fade: 0.09, rise: 9, lineFade: 0.12 }` | The rhythm, the same every time |
+| `lines` | `{ lps: 14, fade: 0.32, rise: 12, ease: "smooth" }` | Lines a second, and each line's entrance |
+| `caret` | `{ shape: "bar" (a block in a terminal), width: 4, height: 0.74, glide: 0.09, blink: 1.1, linger: 1.4, … }` | `false`: none |
+| `terminal` | `{ marker: "$ ", prompt: "$", pause: 0.55, enter: 0.3, delay: 0.35, lps: 9, gap: 0.3 }` | And `cues`: a moment per command |
+| `focus` | `{ dim: 0.42, blur: 1.4, dur: 0.4, band: 0.16, lift: 0.08, chipRadius: 12, halo: 22, … }` | How the rest dims, the band on lines, the chip a span becomes |
+| `scroll` | `{ dur: 0.7, ease: "smooth", follow: "caret", margin: 1, side: 6, edge: 0.15 }` | |
+| `enter`, `exit`, `drift` | `{ dur: 0.7, rise: 28, scale: 0.985 }`, off, `{ scale: 0.012, y: -6 }` | How it comes, leaves before the layer ends (`{}` for the defaults), and creeps meanwhile; `false`: not |
+| `recede` | `{ opacity: 0.5, blur: 3, scale: 0.975, dur: 0.6 }` | With `at` (and `until`): the whole panel steps back while something else is acted on |
+
+The groups hold more than the table shows (`focus` alone has two dozen): the file's `CODE_PANEL_DEFAULTS` is the full list, with a comment on what is not plain from its name.
+
+### `chart`: one number story
+
+Bars, horizontal bars, a line or a ring, with the scale, the labels and the motion worked out. One series, one thing that stands out.
+
+```bash
+allyhub add chart
+```
+
+```ts
+import { chart } from "../../components/chart.js";
+
+part({
+  key: "growth",
+  dur: 5,
+  anchors: { grow: 0.5, beat: 1.9 },
+  layers: [
+    ground, // yours: it draws the chart and its title, nothing round them
+    chart({
+      kind: "bar",
+      title: "Sign-ups per week",
+      data: [
+        { label: "W4", value: 260 },
+        { label: "W5", value: 310 },
+        { label: "W6", value: 490 },
+      ],
+      highlight: "W6",
+      annotation: "+58% in a week",
+      growAt: "@grow", // the marks start to grow
+      highlightAt: "@beat", // the highlight lands
+    }),
+  ],
+});
+```
+
+- **Kinds.** `"bar"`; `"bar-horizontal"`, for long labels; `"line"`, with an area under it; `"ring"`, a share of a whole with one large number at its centre.
+- **Data.** `data: [{ label, value }]`; a value is a number or numeric text (`"1,200"`, `"38%"`). A value that is not a number is drawn as "–", never as zero.
+- **The scale.** Bars always include zero. Ticks step by 1, 2, 2.5 or 5 times a power of ten. Negatives, a single point and all-equal values are handled. A line's axis starts elsewhere only when asked: `axis.min: "data"` or a number.
+- **Labels, by a stated rule.** They shrink together as far as `labels.min`; if they still collide, a line shows every nth (keeping the highlight and the last) and bars abbreviate theirs, or thin them when a label would lose more than half its letters; horizontal bars move a label onto a line of its own above its bar. Nothing is rotated. Gridlines open under a value or the annotation.
+- **What stands out.** `highlight` is a category's label (a line highlights its last point unless told; `false`: nothing). Only it is in the accent; it comes a little forward over a soft shadow, its value larger, and the rest goes pale. `annotation` is a short text in a chip beside it.
+- **Over time.** The marks grow in a stagger from `growAt`, their values counting up; a line's head carries the value it has reached; a ring sweeps round as its centre counts. At `highlightAt` the highlight lands and the annotation comes. Both are word references, anchors or seconds from the part's start; without them the chart starts `motion.delay` into its layer and the highlight lands as the growing ends.
+- **Where it sits.** `box` is `[x, y, w, h]` as fractions of the content box, or one per frame shape (`{ landscape, portrait, square }`); `scale` multiplies every size (1.2 in a landscape frame by default, which is shown smaller on a phone); `maxTall` keeps bars and a line from stretching in a tall frame.
+- **A dark ground** needs `colors.text`, `colors.muted`, `colors.ground` and perhaps `colors.accent`; the quiet tones are mixed from them.
+
+Every value is a prop; `CHART_DEFAULTS` in the file has the same numbers. Lengths are px at 1080p.
+
+| Prop | Default | |
+| --- | --- | --- |
+| `kind`, `data`, `title` | `"bar"`, required, none | A title takes two lines at most, then shrinks |
+| `box`, `scale`, `maxTall`, `align` | `[0, 0, 1, 1]`, `{ landscape: 1.2, portrait: 1, square: 1 }`, 1.25, 0.5 | |
+| `highlight`, `annotation` | none (a line: its last point), none | |
+| `growAt`, `highlightAt` | `motion.delay` into the layer; as the growing ends (a line: when its head reaches the point) | |
+| `values` | `"auto"` | Which marks carry their value: all for bars, the highlight for a line; `"all"`, `"highlight"`, `"none"` |
+| `format` | `{ prefix: "", suffix: "", decimals: "auto", thousands: ",", decimal: ".", compact: false }` | How values and ticks are written |
+| `axis` | `{ show: "auto", ticks: 4, min: "zero", max: "auto", width: 2, baseline: 3, gap: 18 }` | Gridlines and ticks; `"auto"` draws them when not every mark carries its value |
+| `labels` | `{ overflow: "auto", min: 0.72, gap: 14, maxShare: 0.38, offset: 18 }` | The fitting rule's limits |
+| `bar` | `{ width: 0.56, maxWidth: 220, radius: 14, thickness: 0.56, maxThickness: 100, … }` | Bars, both ways |
+| `line` | `{ width: 8, smooth: true, area: true, areaOpacity: 0.24, dots: false, readout: true, guide: true, … }` | The line, its area, the highlighted point, the value that rides its head |
+| `ring` | `{ thickness: 0.15, gap: 8, radius: 7, start: 0, show: "share", decimals: 0, legend: true, … }` | The ring, its centre and its legend; shares are rounded so that they add to 100 |
+| `emphasis` | `{ lift: 0.04, dim: 0.65, shadow: 0.36, glow: 0.55, value: 1.42, … }` | The highlight: how far forward, how pale the rest, how much larger its value |
+| `note` | `{ radius: 12, padX: 20, padY: 10, gap: 14, tail: 8, weight: 650, delay: 0.22, from: 0.86 }` | The annotation's chip |
+| `type` | `{ title: 54, value: 40, label: 32, tick: 27, annotation: 30, legend: 38, … }` | Sizes, weights and fonts |
+| `colors` | the look's accent, text, muted and ground; `quiet`, `grid`, `baseline`, `chip`, `chipText` `"auto"` | Every colour |
+| `tint` | `{ hue: 0.14, quiet: 0.17, grid: 0.09, baseline: 0.32, chip: 0.13 }` | What the `"auto"` colours are mixed from |
+| `motion` | `{ delay: 0.5, enter: 0.6, grow: 0.9, stagger: 0.09, curve: [0.62, 0, 0.18, 1], count: true, overlap: 0.25, beat: 0.7, creep: 0.015, … }` | Every timing and curve |
+
+The groups hold more than the table shows: `CHART_DEFAULTS` is the full list. It draws one series; it does not choose a kind for you (many long labels want `"bar-horizontal"`); and a line's value stands clear of the line, so on a falling line it can sit well above its point, tied to it by a dashed guide.
 
 ## Look `look`
 
@@ -963,7 +1458,7 @@ export default defineConfig({
       surface: "#eef4f1",
     },
     font: { display: '"Inter Variable", "Noto Sans SC", sans-serif' },
-    sfx: { ding: "media/sfx/ding.wav" }, // part({ sounds: [{ at, sound: "ding" }] })
+    sfx: { ding: "assets/media/sfx/ding.wav" }, // part({ sounds: [{ at, sound: "ding" }] })
   },
 });
 ```
@@ -978,11 +1473,12 @@ All are pure functions of time:
 | ---------------------------------------------------- | ---------------------------------------------- |
 | `tween(t, { from, to, start, dur, ease })`           | The interpolated value at time t               |
 | `progress(t, start, dur)`, `lerp(a, b, x)`, `clamp(x, lo?, hi?)` | 0→1 over a span, interpolation, clamping |
-| `ease.inOut`, `ease.out`, `ease.spring(…)` and so on | Easing curves                                  |
+| `ease.linear`, `ease.in`, `ease.out`, `ease.inOut`, `ease.outExpo`, `ease.outBack`, `ease.spring(damping?, frequency?)` | Easing curves, each 0→1 over 0→1, and all there are: `in`, `out` and `inOut` are cubic, `outExpo` ends more slowly, `outBack` passes 1 by about 10 % and comes back, `ease.spring()` makes a curve that swings around 1 as it settles (`damping` 7 and `frequency` 3.2 by default: less damping swings longer). Any other curve is a function `(x) => number` of your own |
 | `stagger(i, gap)`                                    | The delay of the i-th element                  |
 | `rand(seed)`                                         | A deterministic random number generator        |
 | `fitText(el, { min, max })`                          | Scales text to fit inside its container        |
 | `splitText(text, "words" \| "chars" \| separator)`   | Splits by word, by character or by a separator |
+| `countText(value, x, from?)`                         | A number counting to `value`, as text: `"38%"`, `"$1,200.5M"` or `"12,400"` with its number `x` (0→1, yours to ease) of the way from `from` (default 0), keeping what is around it, its decimal places and its thousands separators; `value` itself at 1 and when it has no number. Set it as `textContent` in `render`, with `font-variant-numeric: tabular-nums` so the digits do not shift |
 
 ## Seeing values: `console.log`
 
@@ -1001,7 +1497,7 @@ The same files, the same combo and format and the same moment always give the sa
 
 ## References: `allyhub reference` and `allyhub compare`
 
-`allyhub reference <file or URL> [--out reference/<id>]` measures a reference video on this computer (a URL is downloaded with yt-dlp, installed on first use) and writes into `reference/<id>/`: `video.mp4`, `video.words.json` (its words, the format a take reads), `sheet-01.png`… and `reference.json`. It measures and concludes nothing: what a stretch is for, what the picture is, which text is a caption or a watermark is yours to say, in `interpretation.json` (below). Speech is heard with Parakeet (`--lang`), text on screen read with OCR (Tesseract, about 20 MB on first use; `--no-ocr` skips it; a word counts from confidence `--ocr-confidence` 60, a word of three characters or fewer from `--ocr-short` 80), cuts found by frame difference (`--threshold` 0.3 for a cut; `--min-shot` 0.25 s between cuts, `--weak-floor` 0.12 and `--prominence` 1.8 for weak candidates). `--all` keeps everything the thresholds leave out: every candidate peak with its score, the low-confidence words, every gap between words. Every analysis is cached by the file's content hash in `.allyhub/cache/index/` (`--fresh` redoes them), so running it again on the folder (`allyhub reference reference/<id>`) is quick.
+`allyhub reference <file or URL> [--out .local/work/reference/<id>]` measures a reference video on this computer (a URL is downloaded with yt-dlp, installed on first use) and writes into `.local/work/reference/<id>/`: `video.mp4`, `video.words.json` (its words, the format a take reads), `sheet-01.png`… and `reference.json`. It measures and concludes nothing: what a stretch is for, what the picture is, which text is a caption or a watermark is yours to say, in `interpretation.json` (below). Speech is heard with Parakeet (`--lang`), text on screen read with OCR (Tesseract, about 20 MB on first use; `--no-ocr` skips it; a word counts from confidence `--ocr-confidence` 60, a word of three characters or fewer from `--ocr-short` 80), cuts found by frame difference (`--threshold` 0.3 for a cut; `--min-shot` 0.25 s between cuts, `--weak-floor` 0.12 and `--prominence` 1.8 for weak candidates). `--all` keeps everything the thresholds leave out: every candidate peak with its score, the low-confidence words, every gap between words. Every analysis is cached by the file's content hash in `.local/cache/index/` (`--fresh` redoes them), so running it again on the folder (`allyhub reference .local/work/reference/<id>`) is quick.
 
 `reference.json` (schema 2; times in seconds):
 
@@ -1019,7 +1515,7 @@ The same files, the same combo and format and the same moment always give the sa
 | `segments` | `{ rule, pause, cutWithin, minLength, list }`: a neutral split, mechanics only. A segment ends where a sentence ends with a pause of `pause` seconds or more after it or a cut within `cutWithin` of the gap (without speech: at every cut); segments shorter than `minLength` (`--min-segment`, 2 s) join their shorter neighbour. Each is `{ index, name (s1, s2…), sentences?, start, end, dur, said, words, wordsPerMinute, cuts, shots, cutsPerMinute, text (line ids), textSeconds }`. It says nothing of what a segment is for |
 | `sheets` | The contact sheets beside it: frames every 2 s, labelled with the time and the section's name, the words said under each |
 
-**The interpretation is yours.** Read `reference.json` and the sheets, then write `reference/<id>/interpretation.json` (or pass a file with `allyhub reference reference/<id> --sections <file.json>`, which checks it and writes it there):
+**The interpretation is yours.** Read `reference.json` and the sheets, then write `.local/work/reference/<id>/interpretation.json` (or pass a file with `allyhub reference .local/work/reference/<id> --sections <file.json>`, which checks it and writes it there):
 
 ```json
 {
@@ -1038,14 +1534,14 @@ The same files, the same combo and format and the same moment always give the sa
 - `sections`: in time order, without overlaps (they need not cover the whole video). `role`, `picture`, `name`, `notes` are free text in your words; a section's name is its `name`, else its `role`, as a slug (`demo`, `demo-2` when it repeats), else `s1`, `s2`….
 - `captions.lines` and `watermarks` are ids of `reference.json`'s `text`. Lines you call watermarks are left out of the text numbers in `allyhub compare`. The ids belong to that `reference.json`: write them again after changing an OCR option.
 - `schema` (1) and `source` (`"agent"`) are filled in when left out. A file that cannot hold (a section that ends before it starts or overlaps the one before, an id `text` does not have) is refused with what is wrong; `allyhub reference` run beside a broken `interpretation.json` still measures and says it was not used.
-- `allyhub reference reference/<id>` again draws the sheets with your sections' names. `--structure` prints the sections as a structure (one slot per section with its duration, what was said, and your role and picture) and the matching `part({ key, dur, layers: [] })` list: from your interpretation, else from the neutral segments, named `s1`, `s2`….
+- `allyhub reference .local/work/reference/<id>` again draws the sheets with your sections' names. `--structure` prints the sections as a structure (one slot per section with its duration, what was said, and your role and picture) and the matching `part({ key, dur, layers: [] })` list: from your interpretation, else from the neutral segments, named `s1`, `s2`….
 - `--understand` also sends the video and the local measurements to Gemini (`GEMINI_API_KEY`; the newest Gemini model the key can use, or `--model`) and writes its answer as an interpretation of the same shape, marked `source: "gemini"` with `model` and `snappedWithin` (its section starts are moved to the nearest boundary candidate within 0.7 s; the word times stay local). It goes to `interpretation.json` when there is none (or only Gemini's), to `interpretation.gemini.json` when yours is there. It is a second opinion: check it against the sheets, and edit it or take from it.
 
-`allyhub compare <reference> [folder] --piece <id> [--output] [--combo] [--format]` compares the output's render in `.allyhub/renders/` (rendered first when there is none, or with `--render`; `--file` names another video). It measures the render the same way and with the reference's parameters (the words come from its takes), takes its parts as its sections, and aligns them in order with the reference's: the sections of `interpretation.json` when it is there, else the neutral segments (`sections: { from: "interpretation" | "segments", source? }` says which). The alignment is dynamic time warping over durations, where they start and names: a part whose key or tags share a word with a section's name or role (`hook-b`, `tags: ["cta"]`, or `s3`) matches it more readily, and one section may match several parts or the other way round. It reports first the raw differences (render − reference): per section `ref: { names, … }`, `ours: { keys, … }`, `diff: { seconds, share, cutsPerMinute, wordsPerMinute, textSeconds }`, and for the whole video `overall.diff` (duration, pace, time to first word, text share); then, labelled as such, a summary at a tolerance: `summary: { tolerance, sections, sectionsWithin, shareWithin, meanDurationDiff }` (sections within ±10 % by default, `--tolerance 0.15`). The side-by-side sheet (`--out`, default `.allyhub/compare/…png`) puts each reference section over the parts matched to it.
+`allyhub compare <reference> [folder] --piece <id> [--output] [--combo] [--format]` compares the output's render in `.local/out/` (rendered first when there is none, or with `--render`; `--file` names another video). It measures the render the same way and with the reference's parameters (the words come from its takes), takes its parts as its sections, and aligns them in order with the reference's: the sections of `interpretation.json` when it is there, else the neutral segments (`sections: { from: "interpretation" | "segments", source? }` says which). The alignment is dynamic time warping over durations, where they start and names: a part whose key or tags share a word with a section's name or role (`hook-b`, `tags: ["cta"]`, or `s3`) matches it more readily, and one section may match several parts or the other way round. It reports first the raw differences (render − reference): per section `ref: { names, … }`, `ours: { keys, … }`, `diff: { seconds, share, cutsPerMinute, wordsPerMinute, textSeconds }`, and for the whole video `overall.diff` (duration, pace, time to first word, text share); then, labelled as such, a summary at a tolerance: `summary: { tolerance, sections, sectionsWithin, shareWithin, meanDurationDiff }` (sections within ±10 % by default, `--tolerance 0.15`). The side-by-side sheet (`--out`, default `.local/work/compare/…png`) puts each reference section over the parts matched to it.
 
 ## Defaults
 
-Every value AllyHub uses when you give none, and where you change it. They are starting points, not recommendations. Values inside starter components are not listed: the components are your code.
+Every value AllyHub uses when you give none, and where you change it. They are starting points, not recommendations. A starter component's own values are in its file, which is your code once copied.
 
 **Timing**
 
@@ -1158,6 +1654,8 @@ Every value AllyHub uses when you give none, and where you change it. They are s
 | Compare's summary | sections within ±10 % | `allyhub compare --tolerance` |
 | Moments the check measures | each part's still, layer and cue middles, every second of the part and its last frame, every second from half a second in over footage with a face track or matte; at most 24 a part | `allyhub inspect --at` measures the moments you name, `--every` a grid of them |
 | A text is whole (`text-time`) | looked at every 0.2 s; every text node at 90 % opacity or more, 90 % or more of its glyphs showing | fixed, recorded in each fact's `options`; `allyhub inspect --every 0.1 --texts` lists every block's `opacity` and `ink` at the moments you choose |
+| The message a problem names for a text on screen | the keys whose text is exactly it; else the keys whose text contains it, for a text of 3 letters or digits or more | fixed |
+| How `marked()` draws a mark | `strong` weight 700; `em` the accent colour; `strike` a line through; `code` the mono font at 0.9 em | `marked(line, { strong: { … }, em: { … } })` |
 | Steps `inspect --motion` lists | the 12 largest moves and the 12 largest fades | `--top <n>`, `--top all` |
 | Frames in a stretch | every frame for `--clip` alone; for a grid the fewest apart that fit 60 tiles | `allyhub frames --every <n>` |
 | A gif's width | 960 px at most | `allyhub frames --width` |
