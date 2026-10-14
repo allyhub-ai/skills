@@ -369,7 +369,6 @@ A sheet is rows a person reads, sorts, filters and edits as a grid: leads, resea
 content/research/leads/
   sheet.csv        the rows: a header row, then one row per record
   sheet.yaml       optional: what the columns are
-  views/<id>.yaml  optional: one saved view each, its id its file's name
 ```
 
 - **`sheet.csv` is plain CSV** (RFC 4180: fields quoted only when they hold a comma, a quote or a line break; `""` for a quote). Every value is text; its column's type says how it is read. A row may have fewer fields than the header (the rest are empty), never more. A blank line is a row of empty cells.
@@ -378,7 +377,7 @@ content/research/leads/
   ```yaml
   title: Launch leads          # its name in the project; else the folder's
   key: id                      # the column whose value names each row: whole and unique
-  primary: company             # the column a row is called by: a card's title, a row's page
+  primary: company             # the column a row is called by: its page's title
   columns:
     arr: { type: number, format: { style: currency, currency: USD, decimals: 0 }, width: 120 }
     stage:
@@ -404,52 +403,14 @@ content/research/leads/
   | `url`, `email`, `phone` | as it is; shown as a link | |
   | `file` | a path in the project, from the sheet's folder or from the project's root | |
 
-  Every column also takes `width` (px) and `wrap` (true or false): how it shows where no view says otherwise. An empty cell is allowed in every type.
-- **A view** (`views/pipeline.yaml`) is one way of looking at the rows, every field optional:
-
-  ```yaml
-  title: Pipeline
-  order: 1                                  # its tab's place; else by id
-  columns: [company, stage, arr, owner]     # shown, in this order; the rest hidden
-  widths: { company: 220 }
-  freeze: 1                                 # columns kept in place at the left
-  wrap: [notes]
-  sort: [{ column: arr, desc: true }, company]
-  filter:
-    all:                                    # or any; a list alone is all
-      - { column: stage, in: [Lead, Qualified] }
-      - { column: arr, ">=": 10000 }
-      - any:
-          - { column: owner, empty: true }
-          - { column: owner, is: Ana }
-  group: owner
-  summary: { arr: sum, company: count }     # the footer
-  layout: grid                              # grid (default), board, gallery or calendar
-  colors:                                   # rows coloured by what they say: the first rule a row meets
-    - { color: green, when: [{ column: stage, is: Won }] }
-    - { color: red, when: { any: [{ column: stage, is: Lost }, { column: arr, "<": 1000 }] } }
-  ```
-
-  A view lays its rows out as a `grid` (the default), or as cards: a `board` has a lane per option of its `group`, which must be a select column (a lane for rows with no value first, then the options in their order); a `gallery` shows each row as a card with the picture of its `cover`, a file column; a `calendar` puts each row on the day its `date`, a date column, says (the day as written, its zone not applied). A card's title is the sheet's primary column, its fields are the other columns the view shows; `filter` and `sort` apply to every layout. The person moves a card to another lane or day, which writes that cell, and, where the view does not sort, among the rows, which writes the row's place in `sheet.csv`. `colors` take a doc's colours (`gray`, `brown`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`), and `when` is a filter: a stripe and a tint on a row in the grid, the same on a card.
-
-  | Column type | Operators |
-  | ----------- | --------- |
-  | text, url, email, phone | `is`, `is-not`, `contains`, `not-contains`, `starts-with`, `ends-with`, `empty`, `not-empty` |
-  | number | `=`, `!=`, `<`, `<=`, `>`, `>=`, `between: [low, high]`, `empty`, `not-empty` |
-  | select | `is`, `is-not`, `in`, `not-in`, `empty`, `not-empty` |
-  | multi-select | `has`, `has-any`, `has-all`, `has-none`, `empty`, `not-empty` |
-  | date | `on`, `before`, `after`, `on-or-before`, `on-or-after`, `between`, `empty`, `not-empty` (by day) |
-  | checkbox | `is: true` or `is: false` |
-  | file | `empty`, `not-empty`, `contains` |
-
-  Summaries: `count`, `filled`, `empty`, `unique` for any column; `sum`, `average`, `median`, `min`, `max` for a number; `min`, `max` for a date; `checked` for a checkbox. Sorting is by type (numbers as numbers, an option by its place among the options), empty cells last. A condition with no value yet holds for every row. Anything across sheets (a join, a chart of several) is not a view: write it as a video or a doc.
+  Every column also takes `width` (px) and `wrap` (true or false): how it shows in the grid. An empty cell is allowed in every type. Sorting is by type (numbers as numbers, an option by its place among the options), empty cells last.
 - **Rows are named as a spreadsheet names them** where the person points at cells: `B4` or `B4:C9`, columns by their place in `sheet.csv`, rows counted from 1 under the header (row 1 is the file's second line).
-- **The person's edits** rewrite only the rows they changed; every other row of `sheet.csv` keeps its bytes, and an edit to `sheet.yaml` or a view changes only that field's text. You and the person can be in the sheet at once: what you write shows in their grid without a reload, each changed cell marked with your name for them to keep or undo, and their unsaved edits are merged onto yours cell by cell (by `key` when the sheet has one, which is why a key helps). Write each file whole as it is now with your change in it.
-- **What the person does by hand** is a spreadsheet's basics: typing, pasting, filling and clearing cells; inserting, deleting, moving and resizing rows and columns; renaming a column; its format from a short list (text, number, currency, percent, date, checkbox, a dropdown list, which is `select` with the column's values as options); sorting and filtering a column by ticking its values; find and replace. Everything else has no control in the editor and is asked of you: views and their tabs, filters with conditions, grouping, footers, colour rules, layouts, option colours, a number's decimals or currency, the key and primary columns, and values a formula would work out. A sort or filter the person makes by hand stays on their computer; when they ask to keep it, write it as a view. A ticked filter is written as the `any` group of one column's conditions, in a top-level `all`.
+- **The person's edits** rewrite only the rows they changed; every other row of `sheet.csv` keeps its bytes, and an edit to `sheet.yaml` changes only that field's text. You and the person can be in the sheet at once: what you write shows in their grid without a reload, each changed cell marked with your name for them to keep or undo, and their unsaved edits are merged onto yours cell by cell (by `key` when the sheet has one, which is why a key helps). Write each file whole as it is now with your change in it.
+- **What the person does by hand** is a spreadsheet's basics: typing, pasting, filling and clearing cells; inserting, deleting, moving and resizing rows and columns; renaming a column; its format from a short list (text, number, currency, percent, date, checkbox, a dropdown list, which is `select` with the column's values as options); sorting and filtering a column by ticking its values; hiding and freezing columns; find and replace. How they sort, filter, hide or freeze stays on their computer and is in no file. Everything else has no control in the editor and is asked of you: option colours, a number's decimals or currency, the key and primary columns, and values a formula would work out. A sheet is one grid: there are no saved views, layouts, groups or footers. Anything across sheets (a join, a chart of several) is a video or a doc.
 - **A question about cells** reaches you with the sheet's file, the range, what the cells say and the rows' keys.
 - **A sheet too long to read whole**: `allyhub sheet profile <its place>` measures every column: its type, how many cells are empty, how many distinct values (a multi-select's distinct names), how many its type cannot read, the smallest and largest (a number's sum and mean too, a text's shortest and longest in characters) and its most frequent values (`--top`, default 5; `--json` for all of it). Numbers only. (`allyhub sheet` alone is a video's contact sheet.)
 - **A sheet from a file**: `allyhub sheet import <file> [--to <place>]` makes `content/<place>/sheet.csv` and `sheet.yaml` from a `.csv` (copied as it is), a `.tsv` (written as CSV) or an `.xlsx` (a sheet per worksheet with something in it, `<place>-<worksheet>` when there are several, typed only where the workbook types a whole column), named for the file unless `--to` names the place. It never writes over a place that is taken.
-- **Check**: `allyhub check` reports rows that are not CSV, a header with an empty or repeated name, a row with more fields than the header, a value its column's type cannot read (a few per column, then a count), a `file` that is not in the project, a key that is empty or repeated, a spec or a view that names a column the sheet does not have or does not match the format, an operator that does not fit its column, a `board` without a select column for its `group`, a `calendar` without a date column for its `date`, a `cover` that is not a file column, and a sheet inside another item's folder (AK-M009), each with its file and line.
+- **Check**: `allyhub check` reports rows that are not CSV, a header with an empty or repeated name, a row with more fields than the header, a value its column's type cannot read (a few per column, then a count), a `file` that is not in the project, a key that is empty or repeated, a spec that names a column the sheet does not have or does not match the format, and a sheet inside another item's folder (AK-M009), each with its file and line.
 - **Render**: `allyhub render --piece <its place under content/>` writes `.local/out/<its place>/sheet.xlsx` (an Excel workbook: values by type, numbers and dates in their formats, a select's options as each cell's list); `--type csv,md,json` writes a copy of the CSV, a Markdown table and JSON (numbers as numbers, checkboxes as true or false, a multi-select as a list).
 - **Data for a video**: a piece reads a sheet like any data file, `ctx.data("content/research/leads/sheet.csv")`: one object per row, a column of numbers as numbers.
 - **The preview**: `allyhub dev` shows a sheet on a page of its own (`?sheet=<its place>&view=<id>`), and AllyHub Studio in the project's tree. A person can also make a sheet from a `.csv`, `.tsv` or `.xlsx` file (one sheet per worksheet, typed only where the workbook types a whole column).
