@@ -34,7 +34,7 @@ Your agent opens a live preview in your browser (in Claude Code's desktop app, i
 
 Node.js 22.12 or newer. The CLI downloads headless Chrome the first time it needs it; rendering MP4s also needs ffmpeg, and your agent tells you how to get it if it is missing. Working with recordings uses local models, downloaded the first time they are needed and run on your computer: speech recognition (about 700 MB) and face tracking and person mattes (about 270 MB).
 
-Making, previewing and rendering are free and need no account. Voiceover, generated images and footage, and research use credits on your allyhub.com account; your agent tells you the price first.
+Making, previewing and rendering are free and need no account. Voiceover, generated images and footage, and research use credits on your allyhub.com account.
 
 ## License
 
