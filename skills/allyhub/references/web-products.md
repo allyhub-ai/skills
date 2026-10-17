@@ -3,7 +3,9 @@
 To see or operate a real web product, write a Playwright script and run it with `allyhub run <script.mjs>`: it runs on AllyHub's own Node, with AllyHub's headless Chrome, where nothing else is installed (AllyHub Studio included). A script may import two modules by name:
 
 - **`playwright-core`** (also as `playwright`): Playwright, as you know it.
-- **`allyhub/browser`**: `chromium` (Playwright's, launching AllyHub's Chrome: `await chromium.launch()`), `session()` and `glide()`.
+- **`allyhub/browser`**: `chromium` (Playwright's, launching AllyHub's Chrome: `await chromium.launch()`), `session()`, `glide()` and `message()`.
+
+In AllyHub Studio the person watches the pages your script's browser shows (and `allyhub capture`'s) while it runs. Say what you are doing or looking for there with `allyhub run <script.mjs> --message "Checking how Linear prices seats"` (`allyhub capture --message` likewise), and change it as the script moves on with `message("Reading the pricing table")`; it is shown above the page.
 
 **`session(options)`** records what a film needs from a session, whatever code drives it: several people, each a browser context of its own, on one clock; each person's screen as a constant-rate video; and a timeline of what happened on it, logged from the page's own input events.
 

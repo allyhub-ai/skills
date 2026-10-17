@@ -328,10 +328,11 @@ Every file a cloud tool call downloads gets a record beside it, `<file>.gen.json
 }
 ```
 
-- `vendor` is the catalog's category unless it names a vendor; `model` is there when the catalog, the output or the input names one. `input` is what was sent, secrets redacted and inline base64 of 1024 characters or more replaced by its hash and size; `inputHash` is the sha256 of the tool's name and the whole input. `output` is what the tool returned, a value whose JSON is over 2000 characters replaced by its hash and size (`omitted: "large"`). `sha256` and `bytes` are the file's.
+- `vendor` is the catalog's category unless it names a vendor; `model` is there when the catalog, the output or the input names one. `input` is what was sent, secrets redacted, inline base64 of 1024 characters or more replaced by its hash and size, a URL `allyhub upload` gave replaced by the file it stands for (`{ uploaded, sha256, bytes }`) and any other signed URL kept without its signature; `inputHash` is the sha256 of the tool's name and the whole input, with those files in place of their URLs. `output` is what the tool returned, a value whose JSON is over 2000 characters replaced by its hash and size (`omitted: "large"`). `sha256` and `bytes` are the file's.
 - **The record belongs to its file: move or rename them together.** A record whose `sha256` is not the file's is the `gen-mismatch` fact and `gen.matches: false`, never an error; one that cannot be read is the same fact (`why: "unreadable"`) and the file has no `gen`.
 - `ai` is true for everything a tool call downloads. Set it to `false` where the tool fetched rather than generated the file (a stock clip). For media generated outside AllyHub, write the record yourself: `{ "schema": 1, "ai": true, "tool": "…" }` is enough.
 - `allyhub models call <tool> --name <path>` writes the file and its record at that path (`allyhub help models call`).
+- A tool's input that takes a file takes it as a URL the provider fetches. A file on this computer gets one with `allyhub upload <file> [more…]`: kept in the account's Files, never public, its URL working for a few hours; a URL that is already public goes in as it is.
 
 ## Parts `part`
 
@@ -647,6 +648,8 @@ All are pure functions of time:
 | `fitLines(el \| text, { lines, min, max, … })`                                                                          | The largest font size at which a text takes at most n lines of a box (see DOM helpers)                                                                                                                                                                                                                                                                                              |
 | `splitText(text, "words" \| "chars" \| separator)`                                                                      | Splits by word, by character or by a separator                                                                                                                                                                                                                                                                                                                                      |
 | `countText(value, x, from?)`                                                                                            | A number counting to `value`, as text: `"38%"`, `"$1,200.5M"` or `"12,400"` with its number `x` (0→1) of the way from `from` (default 0), keeping what is around it, its decimal places and its thousands separators; `value` itself at 1 and when it has no number. Use `font-variant-numeric: tabular-nums` so the digits do not shift                                        |
+
+**Slow moves shimmer.** Chrome draws a line of text on whole pixels up and down (across, on quarter pixels) and a box's edges close to whole pixels, whatever its transform. Text or a box moving slower than about a pixel a frame (30 px a second at 30 fps; a camera zooming a few per cent a second) steps a pixel every few frames instead of gliding, and things beside each other step on different frames, so text and the shapes round it shiver. A picture (`<img>`, footage) moves smoothly at any speed. `allyhub frames --from <s> --to <s> --clip <file>.mp4` shows a stretch frame by frame.
 
 ## `console.log`
 
