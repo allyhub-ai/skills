@@ -5,7 +5,7 @@ Make videos and decks as TypeScript, docs as MDX and sheets as CSV with your cod
 ## Install
 
 ```sh
-npx skills add allyhub-ai/skills -g
+npx skills add allyhub-ai/skills -g -a claude-code codex
 ```
 
 Then ask your agent to use AllyHub. The skill uses the CLI:
