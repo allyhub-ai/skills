@@ -60,16 +60,25 @@ for (const p of release.packages) {
   ready.add(p.name);
 }
 for (const p of release.packages) {
-  const existing = spawnSync(
-    "npm",
-    ["view", `${p.name}@${p.version}`, "dist.integrity", "--json"],
-    { encoding: "utf8" },
+  // Use the install metadata. npm's full metadata can keep a cached 404
+  // after a new package is already available to installers.
+  const response = await fetch(
+    `https://registry.npmjs.org/${encodeURIComponent(p.name)}`,
+    {
+      headers: { accept: "application/vnd.npm.install-v1+json" },
+      signal: AbortSignal.timeout(30_000),
+    },
   );
-  if (existing.error) throw existing.error;
-  if (existing.status === 0) {
+  assert.ok(
+    response.ok || response.status === 404,
+    `Cannot check ${p.name}: HTTP ${response.status}`,
+  );
+  const metadata = response.ok ? await response.json() : undefined;
+  const existing = metadata?.versions?.[p.version];
+  if (existing) {
     const expected = `sha512-${Buffer.from(p.sha512, "hex").toString("base64")}`;
     assert.equal(
-      JSON.parse(existing.stdout),
+      existing.dist?.integrity,
       expected,
       `${p.name}: npm already has different bytes for this version`,
     );
@@ -78,11 +87,6 @@ for (const p of release.packages) {
     );
     continue;
   }
-  assert.equal(
-    JSON.parse(existing.stdout).error.code,
-    "E404",
-    `Cannot check ${p.name}: ${existing.stderr}`,
-  );
   console.log(`Publishing ${p.name}@${p.version} (${tag})`);
   const result = spawnSync(
     "npm",
