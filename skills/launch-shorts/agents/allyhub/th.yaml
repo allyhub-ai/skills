@@ -1,0 +1,3 @@
+display_name: "คลิปสั้นเปิดตัว"
+short_description: "วิดีโอแนวตั้งสั้นๆ สำหรับทุกการเปิดตัว"
+default_prompt: "ใช้สกิล launch-shorts: ทำคลิปสั้นเกี่ยวกับ [สิ่งที่จะเปิดตัว] สำหรับ [TikTok, Reels, LinkedIn หรือ X]"

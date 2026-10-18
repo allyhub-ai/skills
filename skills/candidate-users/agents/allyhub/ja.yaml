@@ -1,0 +1,3 @@
+display_name: "見込みユーザー"
+short_description: "製品が解決する課題を抱えている人"
+default_prompt: "candidate-users スキルを使って：[製品の URL] を必要としている人を探してください。たいていは [対象となる人] で、[よくいる場所：Reddit、LinkedIn、TikTok、フォーラム…] にいます。"

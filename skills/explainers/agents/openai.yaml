@@ -1,0 +1,4 @@
+interface:
+  display_name: Explainers
+  short_description: How something works, in about a minute
+  default_prompt: "Use the explainers skill: explain [what it is, or how it works] to [who it’s for], in about a minute."

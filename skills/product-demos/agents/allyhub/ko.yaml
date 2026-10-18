@@ -1,0 +1,3 @@
+display_name: "제품 데모"
+short_description: "직접 사용하는 모습으로 보여 주는 제품"
+default_prompt: "product-demos 스킬을 사용해: [대상 고객]을 위해 [제품 URL]의 데모를 만들어 주세요. 보는 사람이 [제품이 해 주는 한 가지]를 기억해야 합니다."

@@ -1,0 +1,3 @@
+display_name: "Vídeos explicativos"
+short_description: "Cómo funciona algo, en un minuto más o menos"
+default_prompt: "Usa la skill explainers: Explica [qué es o cómo funciona] para [quién lo verá], en un minuto más o menos."

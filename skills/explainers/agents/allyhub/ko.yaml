@@ -1,0 +1,3 @@
+display_name: "설명 영상"
+short_description: "무언가가 작동하는 방식을 1분 안팎으로"
+default_prompt: "explainers 스킬을 사용해: [무엇인지, 또는 어떻게 작동하는지]를 [대상 시청자]에게 1분 안팎으로 설명해 주세요."

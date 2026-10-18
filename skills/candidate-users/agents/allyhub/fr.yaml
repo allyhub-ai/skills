@@ -1,0 +1,3 @@
+display_name: "Utilisateurs potentiels"
+short_description: "Les gens qui ont le problème que votre produit résout"
+default_prompt: "Utilise la skill candidate-users : Trouvez les gens qui ont besoin de [l’URL de votre produit]. Ce sont souvent [votre public], sur [où ils se retrouvent : Reddit, LinkedIn, TikTok, forums…]."

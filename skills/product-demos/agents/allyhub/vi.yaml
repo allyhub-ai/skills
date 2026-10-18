@@ -1,0 +1,3 @@
+display_name: "Video demo sản phẩm"
+short_description: "Sản phẩm của bạn, trình diễn qua chính cách dùng"
+default_prompt: "Dùng skill product-demos: Làm một video demo cho [URL sản phẩm của bạn] dành cho [người xem là ai]. Họ nên nhớ [điều quan trọng nhất sản phẩm làm cho họ]."

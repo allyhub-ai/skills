@@ -1,0 +1,21 @@
+title: Signals
+key: id
+primary: quote
+columns:
+  id: { width: 120 }
+  date: { type: date, format: short }
+  platform: { width: 110 }
+  link: { type: url, width: 120 }
+  author: { width: 150 }
+  quote: { width: 360, wrap: true }
+  kind:
+    type: select
+    options:
+      - { name: asking, color: blue }
+      - { name: complaining, color: red }
+      - { name: workaround, color: orange }
+      - { name: hiring, color: purple }
+      - { name: switching, color: green }
+  about: { width: 160 }
+  engagement: { type: number, width: 100 }
+  round: { type: date, format: short }

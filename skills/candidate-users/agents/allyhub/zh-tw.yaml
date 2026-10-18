@@ -1,0 +1,3 @@
+display_name: "潛在使用者"
+short_description: "找到正被你的產品所解決的問題困擾的人"
+default_prompt: "使用 candidate-users 技能：幫我找需要[你產品的網址]的人。他們通常是[目標使用者]，常在[他們出沒的地方：Reddit、LinkedIn、TikTok、論壇…]。"

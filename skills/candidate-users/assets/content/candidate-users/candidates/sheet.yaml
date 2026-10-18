@@ -1,0 +1,37 @@
+title: Candidates
+key: key
+primary: name
+columns:
+  key: { width: 150 }
+  name: { width: 160 }
+  kind:
+    type: select
+    options:
+      - { name: person, color: blue }
+      - { name: company, color: brown }
+  platform: { width: 110 }
+  profile: { type: url, width: 120 }
+  who: { width: 200, wrap: true }
+  why: { width: 260, wrap: true }
+  fit:
+    type: select
+    options:
+      - { name: strong, color: green }
+      - { name: good, color: yellow }
+      - { name: maybe, color: gray }
+  signals: { type: number, width: 80 }
+  strongest: { type: url, width: 120 }
+  last_seen: { type: date, format: short }
+  opener: { width: 260, wrap: true }
+  first_seen: { type: date, format: short }
+  round: { type: date, format: short }
+  status:
+    type: select
+    options:
+      - { name: new, color: gray }
+      - { name: contacted, color: blue }
+      - { name: replied, color: purple }
+      - { name: talking, color: orange }
+      - { name: user, color: green }
+      - { name: not a fit, color: red }
+  notes: { width: 220, wrap: true }

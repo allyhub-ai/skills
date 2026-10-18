@@ -1,0 +1,3 @@
+display_name: "Video ngắn ra mắt"
+short_description: "Một video dọc ngắn cho mỗi lần phát hành"
+default_prompt: "Dùng skill launch-shorts: Làm một video ngắn về [điều sắp ra mắt] cho [TikTok, Reels, LinkedIn hoặc X]."

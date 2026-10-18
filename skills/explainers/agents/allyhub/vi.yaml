@@ -1,0 +1,3 @@
+display_name: "Video giải thích"
+short_description: "Cách một thứ vận hành, trong khoảng một phút"
+default_prompt: "Dùng skill explainers: Giải thích [nó là gì, hoặc nó vận hành ra sao] cho [người xem là ai], trong khoảng một phút."

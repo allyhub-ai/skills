@@ -1,0 +1,3 @@
+display_name: "ローンチ用ショート"
+short_description: "リリースごとに作る短い縦型動画"
+default_prompt: "launch-shorts スキルを使って：[ローンチする内容] について、[TikTok、Reels、LinkedIn、X] 向けのショート動画を作ってください。"

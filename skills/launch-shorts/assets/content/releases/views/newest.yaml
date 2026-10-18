@@ -1,0 +1,2 @@
+title: Newest first
+sort: [{ column: date, desc: true }]
