@@ -3,7 +3,20 @@
 To see or operate a real web product, write a Playwright script and run it with `allyhub run <script.mjs>`: it runs on AllyHub's own Node, with AllyHub's headless Chrome, where nothing else is installed (AllyHub Studio included). A script may import two modules by name:
 
 - **`playwright-core`** (also as `playwright`): Playwright, as you know it.
-- **`allyhub/browser`**: `chromium` (Playwright's, launching AllyHub's Chrome: `await chromium.launch()`), `session()` and `glide()`.
+- **`allyhub/browser`**: `chromium` (Playwright's, launching AllyHub's Chrome: `await chromium.launch()`), `session()`, `glide()` and `message()`.
+
+In AllyHub Studio the person watches the pages your script's browser shows (and `allyhub capture`'s) while it runs. Say what you are doing or looking for there with `allyhub run <script.mjs> --message "Checking how Linear prices seats"` (`allyhub capture --message` likewise), and change it as the script moves on with `message("Reading the pricing table")`; it is shown above the page.
+
+## Studio's browser: signed in where the person is
+
+In AllyHub Studio, `chromium.launch()` (from `allyhub/browser` or `playwright-core`), `launchPersistentContext()` and `allyhub capture` do not start a browser: they connect to Studio's own browser, the one the person sees in Studio and can click and type in. It has one profile for every project on this computer, so your script is signed in wherever the person is. Launch options do not apply there.
+
+- `browser.contexts()[0]` holds the tabs already open, the person's included: the page you left on show last time is there.
+- A new context or page (`browser.newPage()`, `browser.newContext()`) is a new tab in the same profile, signed in too. When the context or the browser closes, its tabs close, except the one on show, which stays for the person and for your next script.
+- `context.clearCookies()` is refused: it would sign the person out of every site. `context.addCookies()` works and lasts.
+- A recording (`session()`) is drawn in AllyHub's headless Chrome as before, at its own scale and undisturbed; in Studio its contexts start with the cookies of Studio's browser, so it is signed in too (a site that keeps its sign-in elsewhere than in cookies is not).
+
+**When the person must act** (sign in, enter a 2FA code, pass a check only a person should, set something up), leave the page on show in Studio's browser (a page your script opened and left open is), then run `allyhub handoff "Sign in to Linear with your work account"` and end your turn. Studio shows your words over the page and keeps your scripts out of the browser while the person works there (a script that tries is refused with `browser_busy`). Their answer comes as your next message: "Done in the browser: …", or that they did not do it. Then run your script again; the sign-in stays for every later script. Never ask for a password in the conversation.
 
 **`session(options)`** records what a film needs from a session, whatever code drives it: several people, each a browser context of its own, on one clock; each person's screen as a constant-rate video; and a timeline of what happened on it, logged from the page's own input events.
 

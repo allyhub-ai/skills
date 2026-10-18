@@ -9,11 +9,11 @@ AllyHub runs, checks, previews and renders videos and decks that you write as co
 
 ## Run it
 
-- `allyhub` means `npx -y allyhub`. **`allyhub help` lists every command by area (content, AI models, research, setup); `allyhub help <command>` is the full reference for one**, every option with its default. Run commands yourself, with the workspace as the working folder.
+- `allyhub` means AllyHub Studio's command, `~/.allyhub/bin/allyhub`, where it exists: run it by its full path with the home folder written out (`/Users/<you>/.allyhub/bin/allyhub`), never with `~` or `$HOME`, which Codex's permission rule does not match. Without it, `allyhub` on PATH, else `npx -y allyhub`. **`allyhub help` lists every command by area (content, AI models, research, setup); `allyhub help <command>` is the full reference for one**, every option with its default. Run commands yourself, with the workspace as the working folder.
 - **Before you write a tool of your own, ask `allyhub find "<what you need done>"`**: it ranks AllyHub's own commands (free, on this computer) with the cloud's AI models and research tools (priced), whatever words you use.
 - **The workspace** is a plain folder, not a Node project: `allyhub/` in the folder you started in, or the current folder if it has `allyhub.config.ts` or `content/`. Create it if it is missing, with a `.gitignore` that has the line `.local/`. If it has an `AGENTS.md`, read it first and follow it.
 - MP4s need ffmpeg: if `allyhub doctor` says it is missing, give the person the install command and wait. When this skill and `allyhub` disagree, `allyhub doctor` says whether they are the same version and `allyhub skill install` updates the skill.
-- In a sandbox that blocks the network, a local server or Chrome (Codex), run `allyhub` outside it: start each command bare (`allyhub check`), nothing chained before or after, so the permission rule matches.
+- In a sandbox that blocks the network, a local server or Chrome (Codex), run `allyhub` outside it: start each command with the command itself, as above (`/Users/<you>/.allyhub/bin/allyhub check`), nothing chained before or after, so the permission rule matches.
 
 ## The contract
 
