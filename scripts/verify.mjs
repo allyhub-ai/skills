@@ -47,6 +47,20 @@ while (pending.length > 0) {
         release.version,
         `${p.name}: ${tag} does not point to this release`,
       );
+      const archive = await fetch(
+        version.dist.tarball.replace(/^http:/, "https:"),
+        {
+          method: "HEAD",
+          signal: AbortSignal.timeout(30_000),
+        },
+      );
+      if (
+        archive.status === 404 ||
+        archive.status === 429 ||
+        archive.status >= 500
+      )
+        return p;
+      assert.ok(archive.ok, `${p.name}: archive HTTP ${archive.status}`);
       console.log(
         `${p.name}@${release.version}: public hash and ${tag} verified`,
       );
