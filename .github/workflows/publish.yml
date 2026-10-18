@@ -24,7 +24,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -45,3 +45,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
         run: node scripts/publish.mjs artifacts "$RELEASE_TAG"
+      - name: Wait for npm availability and verify public hashes
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: node scripts/verify.mjs artifacts "$RELEASE_TAG"
