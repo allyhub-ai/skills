@@ -60,12 +60,12 @@ for (const p of release.packages) {
   ready.add(p.name);
 }
 for (const p of release.packages) {
-  // Use the install metadata. npm's full metadata can keep a cached 404
-  // after a new package is already available to installers.
+  // Ask npm for its publication record, bypassing cached metadata that
+  // can still show a placeholder after a new package has been published.
   const response = await fetch(
-    `https://registry.npmjs.org/${encodeURIComponent(p.name)}`,
+    `https://registry.npmjs.org/${encodeURIComponent(p.name)}?write=true`,
     {
-      headers: { accept: "application/vnd.npm.install-v1+json" },
+      headers: { accept: "application/json" },
       signal: AbortSignal.timeout(30_000),
     },
   );
