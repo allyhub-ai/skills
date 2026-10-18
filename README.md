@@ -16,7 +16,7 @@ npx allyhub help
 
 Needs Node.js 22.19 or newer. The CLI downloads headless Chrome when first needed. MP4 rendering also needs ffmpeg. Cloud generation and research are optional and use credits on your [AllyHub](https://allyhub.com) account.
 
-This skill accompanies AllyHub 0.1.0-alpha.5.
+This skill accompanies AllyHub 0.1.0-alpha.6.
 
 ## License
 
