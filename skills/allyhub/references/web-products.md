@@ -9,7 +9,7 @@ In AllyHub Studio the person watches the pages your script's browser shows (and 
 
 ## Studio's browser: signed in where the person is
 
-In AllyHub Studio, `chromium.launch()` (from `allyhub/browser` or `playwright-core`), `launchPersistentContext()` and `allyhub capture` do not start a browser: they connect to Studio's own browser, the one the person sees in Studio and can click and type in. It has one profile for every project on this computer, so your script is signed in wherever the person is. Launch options do not apply there.
+In AllyHub Studio, `chromium.launch()` (from `allyhub/browser` or `playwright-core`), `launchPersistentContext()` and `allyhub capture` do not start a browser: they connect to Studio's own browser, the one the person sees in Studio and can click and type in. It has one profile for every project on this computer, so your script is signed in wherever the person is: open only what the task needs, and never change an account, its settings or its data unless the person asked for that. Launch options do not apply there.
 
 - `browser.contexts()[0]` holds the tabs already open, the person's included: the page you left on show last time is there.
 - A new context or page (`browser.newPage()`, `browser.newContext()`) is a new tab in the same profile, signed in too. When the context or the browser closes, its tabs close, except the one on show, which stays for the person and for your next script.
