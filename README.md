@@ -32,7 +32,7 @@ or with the skills CLI, from AllyHub's index:
 npx skills add https://allyhub.com --skill product-demos
 ```
 
-They are listed at [allyhub.com/skills](https://allyhub.com/skills). Their index follows the Agent Skills discovery standard, at `https://allyhub.com/.well-known/agent-skills/index.json`; this repository's CI builds it, and the gallery, from `skills/` on every change. `skills/README.md` is how a skill here is written.
+They are listed at [allyhub.com/skills](https://allyhub.com/skills). Their index follows the Agent Skills discovery standard, at `https://allyhub.com/.well-known/agent-skills/index.json`; this repository's CI builds it from `skills/`, and the gallery (`apps/skills`) from it and each skill's page in `content/skills/`, on every change. `skills/README.md` is how a skill here is written, and `AGENTS.md` how this repository, an AllyHub project of its own, is worked in.
 
 ## Codex
 

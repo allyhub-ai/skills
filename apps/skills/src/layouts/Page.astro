@@ -1,0 +1,83 @@
+---
+// Every page: what a crawler and an agent read first (title, description,
+// canonical address, the Markdown copy, the skill index, structured data),
+// then the page, then the footer's links for agents.
+import "../styles/site.css";
+import { BASE, GITHUB, INDEX_URL, ORIGIN } from "../lib/skills";
+
+interface Props {
+  title: string;
+  description: string;
+  canonical: string;
+  markdown: string;
+  crumbs: { name: string; url?: string }[];
+  jsonld: object[];
+}
+const { title, description, canonical, markdown, crumbs, jsonld } = Astro.props;
+const breadcrumb = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [{ name: "AllyHub", url: `${ORIGIN}/` }, ...crumbs].map((c, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: c.name,
+    item: c.url ?? canonical,
+  })),
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="text/markdown" href={markdown} />
+    <link rel="alternate" type="application/json" href={INDEX_URL} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AllyHub" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    {[...jsonld, breadcrumb].map((j) => <script type="application/ld+json" set:html={JSON.stringify(j)} />)}
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <a href={`${ORIGIN}/`}><b>AllyHub</b></a>
+        {crumbs.map((c) => (
+          <>
+            <span>/</span>
+            {c.url ? <a href={c.url}>{c.name}</a> : <span>{c.name}</span>}
+          </>
+        ))}
+      </header>
+      <main><slot /></main>
+      <footer>
+        <a href={markdown}>This page as Markdown</a>
+        <a href={`${BASE}/llms.txt`}>llms.txt</a>
+        <a href={INDEX_URL}>Agent Skills index</a>
+        <a href={GITHUB}>Source on GitHub</a>
+      </footer>
+    </div>
+    <script is:inline>
+      for (const b of document.querySelectorAll("[data-copy]"))
+        b.addEventListener("click", async () => {
+          const t = document.getElementById(b.dataset.copy).textContent;
+          try { await navigator.clipboard.writeText(t); } catch {
+            const a = document.createElement("textarea"); a.value = t; document.body.append(a);
+            a.select(); document.execCommand("copy"); a.remove();
+          }
+          const label = b.textContent; b.textContent = "Copied";
+          setTimeout(() => (b.textContent = label), 1500);
+        });
+    </script>
+  </body>
+</html>

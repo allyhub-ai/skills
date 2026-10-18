@@ -1,0 +1,106 @@
+---
+import Page from "../../../layouts/Page.astro";
+import Card from "../../../components/Card.astro";
+import { AGENTS, BASE, CATEGORIES, GITHUB, ORIGIN, html, plain, skills, type Skill } from "../../../lib/skills";
+
+export function getStaticPaths() {
+  return skills().map((skill) => ({ params: { name: skill.name }, props: { skill } }));
+}
+const { skill } = Astro.props as { skill: Skill };
+const { page, card } = skill;
+const blanks = (text: string) =>
+  text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replace(/\[([^\]]+)\]/gu, '<span class="blank">[$1]</span>');
+// "When to use it" holds two lists: what it is for, then what another skill is for.
+const [forThis = "", forOther = ""] = (page.sections["When to use it"] ?? "").split(/^Use another skill for:\s*$/mu);
+const others = skills().filter((s) => s.name !== skill.name);
+const jsonld = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    name: page.title,
+    alternateName: skill.name,
+    description: page.definition,
+    abstract: card.summary,
+    url: skill.url,
+    codeRepository: `${GITHUB}/tree/main/skills/${skill.name}`,
+    license: "https://spdx.org/licenses/MIT.html",
+    version: String(card.version),
+    ...(skill.updated ? { dateModified: skill.updated } : {}),
+    runtimePlatform: AGENTS,
+    genre: CATEGORIES[card.category],
+    image: `${skill.url}cover.svg`,
+    isAccessibleForFree: true,
+    publisher: { "@type": "Organization", name: "AllyHub", url: ORIGIN },
+    isPartOf: { "@type": "CollectionPage", name: "AllyHub skills", url: `${BASE}/` },
+  },
+  ...(page.questions.length
+    ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: page.questions.map((q) => ({
+            "@type": "Question",
+            name: q.question,
+            acceptedAnswer: { "@type": "Answer", text: plain(q.answer) },
+          })),
+        },
+      ]
+    : []),
+];
+const sections: [string, string, string][] = [
+  ["What you get", "", html(page.sections["What you get"] ?? "")],
+  ["What it takes", "takes", html(page.sections["What it takes"] ?? "")],
+  ["How it works", "steps", html(page.sections["How it works"] ?? "")],
+];
+---
+<Page
+  title={`${page.title}: ${card.summary} · AllyHub skills`}
+  description={page.definition}
+  canonical={skill.url}
+  markdown={`${BASE}/${skill.name}.md`}
+  crumbs={[{ name: "Skills", url: "/skills/" }, { name: page.title }]}
+  jsonld={jsonld}
+>
+  <div class="hero">
+    <div>
+      <span class={`kind ${card.category}`}><i></i>{CATEGORIES[card.category]}</span>
+      <h1>{page.title}</h1>
+      <p class="promise">{card.summary}</p>
+      <p class="definition">{page.definition}</p>
+      <div class="composer">
+        <p id="prompt" set:html={blanks(skill.prompt)} />
+        <div class="bar"><span>{AGENTS.join(" · ")}</span><button data-copy="prompt">Copy prompt</button></div>
+      </div>
+      <p class="quiet">Or add it to a project's folder: <code>{skill.install}</code></p>
+    </div>
+    <div class="cover"><img src={`${skill.path}cover.svg`} alt={`${page.title}: ${card.summary}`} width="320" height="180" /></div>
+  </div>
+  <section class="part">
+    <h2>When to use it</h2>
+    <div class="when">
+      <div set:html={html(forThis)} />
+      <div><p>Use another skill for:</p><Fragment set:html={html(forOther)} /></div>
+    </div>
+  </section>
+  {sections.map(([heading, kind, body]) => (
+    <section class={`part ${kind}`}><h2>{heading}</h2><div set:html={body} /></section>
+  ))}
+  {page.questions.length > 0 && (
+    <section class="part qa">
+      <h2>Questions</h2>
+      <div>{page.questions.map((q) => <div><h3>{q.question}</h3><Fragment set:html={html(q.answer)} /></div>)}</div>
+    </section>
+  )}
+  <p class="facts">
+    Version {card.version}
+    {skill.updated && <> · Updated <time datetime={skill.updated}>{skill.updated}</time></>}
+    · Free, MIT · <a href={`${GITHUB}/tree/main/skills/${skill.name}`}>Source</a>
+  </p>
+  <section style="margin-top:40px">
+    <h2>More skills</h2>
+    <div class="related">{others.map((s) => <Card skill={s} />)}</div>
+  </section>
+</Page>

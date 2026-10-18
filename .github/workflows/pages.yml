@@ -1,16 +1,17 @@
 name: Skill index and gallery
 
-# AllyHub's skill index (the Agent Skills discovery standard) and its
-# gallery, built from skills/ on every change and served by GitHub Pages;
-# allyhub.com forwards /.well-known/agent-skills/ and /skills/ to them.
-# A pull request builds them only, so a skill with a problem never ships.
+# AllyHub's skill index (the Agent Skills discovery standard) and the
+# gallery (apps/skills), built from skills/ and content/skills/ on every
+# change and served by GitHub Pages; allyhub.com forwards
+# /.well-known/agent-skills/ and /skills/ to them. A pull request builds
+# them only, so a skill or a page with a problem never ships.
 
 on:
   push:
     branches: [main]
-    paths: ["skills/**", "scripts/site.mjs", ".github/workflows/pages.yml"]
+    paths: ["skills/**", "content/**", "apps/skills/**", ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["skills/**", "scripts/site.mjs", ".github/workflows/pages.yml"]
+    paths: ["skills/**", "content/**", "apps/skills/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -22,28 +23,32 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
-env:
-  # The CLI whose `allyhub skill index` checks and packs the skills.
-  ALLYHUB_VERSION: "0.1.0-alpha.7"
-
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/skills
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Each page's last update comes from git.
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          package-manager-cache: false
+          cache: npm
+          cache-dependency-path: apps/skills/package-lock.json
+      - run: npm ci
       - name: Check and index the skills
-        run: npx -y "allyhub@$ALLYHUB_VERSION" skill index skills --out site/well-known/agent-skills
-      - name: Draw the gallery
-        run: node scripts/site.mjs site
+        run: npm run index
+      - name: Build the gallery
+        run: npm run build
       - if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
-          path: site
+          path: apps/skills/dist
 
   deploy:
     if: github.event_name != 'pull_request'

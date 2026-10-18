@@ -1,0 +1,56 @@
+export const describes = { skill: "candidate-users", version: 2 };
+
+# Candidate users
+
+Candidate users is an Agent Skill that finds people who show in public that they have the problem your product solves: they ask how to do it, complain about what they use now, describe a workaround or hire for it. Give it to Claude Code, Codex or AllyHub Studio with your product; it comes back with a ranked list, each person with the post that shows it and why they fit, and keeps searching round after round.
+
+## When to use it
+
+Use it for:
+
+- Early users, beta testers or people to interview.
+- Leads and prospects who already have the problem.
+- Finding where your users talk: Reddit, LinkedIn, X, TikTok, forums and more.
+
+Use another skill for:
+
+- A demo film of your product: [Product demos](/skills/product-demos/).
+- How something works, in about a minute: [Explainers](/skills/explainers/).
+- A short video for each release: [Launch shorts](/skills/launch-shorts/).
+
+## What you get
+
+- A ranked list of candidates, a row per person or company, with columns for your own status and notes, which the agent never writes in.
+- The signals: each post that shows the problem, in its author's own words, dated.
+- A report for each round: who to contact first and why, what each source found, what people said, and what the next round will try.
+- The searches: where, what was asked, what it found, and whether it is worth running again.
+- A product brief, the competitors, and a profile of who to look for and who is not a fit.
+
+## What it takes
+
+- **Time:** about an hour for the first round, which aims at about 50 people, ranked.
+- **Cost:** the skill is free (MIT). It searches with AllyHub's research tools, which need an AllyHub account; most searches cost a fraction of a credit.
+- **From you:** the product. Who it is for and where they talk help; otherwise the agent works them out and says what it assumed.
+- **What it never does:** contact anyone, guess an email or collect anything private. It uses public posts as they were posted, and a page that needs a sign-in is noted, never worked around.
+- **Agents:** Claude Code or Codex with Node.js 22.19 or newer, or AllyHub Studio, which brings everything.
+
+## How it works
+
+1. The agent reads the product and writes who to look for, the signals that give them away and where they talk.
+2. It plans the searches and picks the tool that does each best.
+3. It searches, adds the people and the posts it finds, and ranks them.
+4. It writes the round's report. You decide who to contact; the next round starts from what this one found.
+
+## Questions
+
+### Does it contact anyone?
+
+No. It finds and ranks people; you decide who to contact.
+
+### Where does it search?
+
+X, Reddit, LinkedIn, Facebook, Instagram, TikTok, YouTube, app and product reviews, job posts and more, with AllyHub's research tools. A forum or a blog that no tool reaches it reads through its public pages, at a polite pace.
+
+### Does it get better each round?
+
+Yes. Each round starts from the profile, the people and the searches the last one kept, and notes which searches are still worth running.

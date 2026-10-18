@@ -1,0 +1,55 @@
+---
+import Page from "../../layouts/Page.astro";
+import Card from "../../components/Card.astro";
+import { BASE, CATEGORIES, ORIGIN, gallery, html, plain, skills } from "../../lib/skills";
+
+const doc = gallery();
+const all = skills();
+const groups = Object.entries(CATEGORIES)
+  .map(([category, heading]) => ({ heading, own: all.filter((s) => s.card.category === category) }))
+  .filter((g) => g.own.length > 0);
+const jsonld = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: doc.title,
+    description: doc.definition,
+    url: `${BASE}/`,
+    publisher: { "@type": "Organization", name: "AllyHub", url: ORIGIN },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: all.map((s, i) => ({ "@type": "ListItem", position: i + 1, url: s.url, name: s.page.title })),
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: doc.questions.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: { "@type": "Answer", text: plain(q.answer) },
+    })),
+  },
+];
+---
+<Page
+  title={`${doc.title}: Agent Skills for Claude Code, Codex and AllyHub Studio`}
+  description={doc.definition}
+  canonical={`${BASE}/`}
+  markdown={`${BASE}/llms.txt`}
+  crumbs={[{ name: "Skills" }]}
+  jsonld={jsonld}
+>
+  <h1>{doc.title}</h1>
+  <p class="definition gallery-intro">{doc.definition}</p>
+  {groups.map((g) => (
+    <section class="group">
+      <h2>{g.heading}</h2>
+      <div class="related">{g.own.map((s) => <Card skill={s} />)}</div>
+    </section>
+  ))}
+  <section class="part qa">
+    <h2>Questions</h2>
+    <div>{doc.questions.map((q) => <div><h3>{q.question}</h3><Fragment set:html={html(q.answer)} /></div>)}</div>
+  </section>
+</Page>

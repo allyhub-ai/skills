@@ -1,0 +1,10 @@
+---
+import { CATEGORIES, type Skill } from "../lib/skills";
+const { skill } = Astro.props as { skill: Skill };
+---
+<a class="card" href={skill.path}>
+  <div class="cover"><img src={`${skill.path}cover.svg`} alt="" width="320" height="180" loading="lazy" /></div>
+  <span class={`kind ${skill.card.category}`}><i></i>{CATEGORIES[skill.card.category]}</span>
+  <h3>{skill.page.title}</h3>
+  <p>{skill.card.summary}</p>
+</a>
