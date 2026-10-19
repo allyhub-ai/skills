@@ -1,0 +1,15 @@
+---
+import Page from "../layouts/Page.astro";
+import { BASE } from "../lib/skills";
+---
+<Page
+  title="Not found · AllyHub skills"
+  description="This page is not in the AllyHub skills gallery."
+  canonical={`${BASE}/`}
+  markdown={`${BASE}/llms.txt`}
+  crumbs={[{ name: "Skills", url: "/skills/" }]}
+  jsonld={[]}
+>
+  <h1>Not found</h1>
+  <p class="definition">There is no such page. <a href="/skills/">Every skill is listed here.</a></p>
+</Page>

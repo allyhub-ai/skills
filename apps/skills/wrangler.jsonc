@@ -1,0 +1,23 @@
+// The gallery on Cloudflare: the built site (dist/) as the Worker's static
+// assets, on the two allyhub.com paths it owns. Everything else on
+// allyhub.com does not reach this Worker.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "allyhub-skills",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // The Worker sees every request first: it maps the index's path and
+    // answers an agent that asks for Markdown.
+    "run_worker_first": true,
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "allyhub.com/skills", "zone_name": "allyhub.com" },
+    { "pattern": "allyhub.com/skills/*", "zone_name": "allyhub.com" },
+    { "pattern": "allyhub.com/.well-known/agent-skills/*", "zone_name": "allyhub.com" }
+  ],
+  "observability": { "enabled": true }
+}

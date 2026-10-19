@@ -7,10 +7,12 @@ allyhub.com/skills: a page per skill for the people and agents choosing one, bui
 
 A skill without a page doc is left out of the gallery. A page whose `describes` names another version than the skill's is built, with a warning.
 
-What agents and crawlers get besides each page: its words as Markdown (`/skills/<name>.md`), `/skills/llms.txt` and `/skills/llms-full.txt`, `/skills/sitemap.xml`, and schema.org data in each page (the skill, its questions, the breadcrumb). Links within the site are paths under `/skills/`, and styles are inline, because allyhub.com forwards only `/skills/` and `/.well-known/agent-skills/` here.
+What agents and crawlers get besides each page: its words as Markdown (`/skills/<name>.md`), `/skills/llms.txt` and `/skills/llms-full.txt`, `/skills/sitemap.xml`, and schema.org data in each page (the skill, its questions, the breadcrumb). It is served by a Cloudflare Worker (`worker/index.ts`, `wrangler.jsonc`) whose static assets are the built site, on allyhub.com's `/skills/*` and `/.well-known/agent-skills/*` routes; the rest of allyhub.com never reaches it. The Worker serves the index from the build's `well-known/` at `/.well-known/agent-skills/`, answers a page with its Markdown copy when the request prefers `text/markdown`, and names that copy in a `Link` header on every page. Links within the site are paths under `/skills/`, and styles are inline, so nothing is needed from elsewhere on allyhub.com.
 
 ```bash
 npm ci
 npm run index
-npm run dev     # or: npm run build, then npm run preview
+npm run dev     # the pages alone, as you edit
+npm run build && npm run serve   # the built site through the Worker, as allyhub.com serves it
+npm run deploy  # by hand; CI deploys main (.github/workflows/gallery.yml)
 ```
