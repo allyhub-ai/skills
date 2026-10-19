@@ -3,5 +3,5 @@
 node_modules/
 apps/skills/dist/
 apps/skills/.astro/
-apps/skills/public/well-known/
+apps/skills/public/.well-known/
 apps/skills/.wrangler/

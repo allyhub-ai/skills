@@ -7,8 +7,9 @@ name: Skill index and gallery
 # checks the Worker's deploy without making it, so a skill or a page with a
 # problem never ships.
 #
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN (a token that can edit
-# Workers and their routes on allyhub.com's zone) and CLOUDFLARE_ACCOUNT_ID.
+# Needs one repository secret, CLOUDFLARE_API_TOKEN: a token that can edit
+# Workers and their routes on allyhub.com's zone (the account is in
+# apps/skills/wrangler.jsonc).
 
 on:
   push:
@@ -57,4 +58,3 @@ jobs:
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

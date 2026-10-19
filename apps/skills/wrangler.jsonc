@@ -4,14 +4,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "allyhub-skills",
+  // AllyHub's Cloudflare account, which holds the allyhub.com zone.
+  "account_id": "d701f93241afc0f4438eb00243f048f8",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    // The Worker sees every request first: it maps the index's path and
-    // answers an agent that asks for Markdown.
-    "run_worker_first": true,
+    // The Worker runs only for the pages (/skills/ and /skills/<name>/), to
+    // answer an agent that asks for Markdown. Everything else is a static
+    // asset, which Cloudflare serves free and unmetered, never counted
+    // against the Workers request quota.
+    "run_worker_first": ["/skills/", "/skills/*/"],
     "not_found_handling": "404-page"
   },
   "routes": [

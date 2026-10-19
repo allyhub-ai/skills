@@ -248,7 +248,7 @@ if (import.meta.main) {
   const app = fileURLToPath(new URL("..", import.meta.url));
   const index = await buildIndex(
     resolve(app, "../../skills"),
-    join(app, "public/well-known/agent-skills"),
+    join(app, "public/.well-known/agent-skills"),
   );
   console.log(`Indexed ${index.skills.length} skills.`);
 }

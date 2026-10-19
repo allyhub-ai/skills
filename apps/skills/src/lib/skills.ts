@@ -1,5 +1,5 @@
 // What the gallery is made of: the skill index (the Agent Skills discovery
-// standard, built by `scripts/index.ts` into public/well-known/) and a
+// standard, built by `scripts/index.ts` into public/.well-known/) and a
 // page doc per skill in the project's content/skills/<name>/doc.mdx, read
 // by its headings. Everything here runs at build time.
 import { execFileSync } from "node:child_process";
@@ -20,7 +20,7 @@ export const CATEGORIES: Record<string, string> = {
 
 const APP = process.cwd();
 const PROJECT = resolve(APP, "../..");
-const INDEX = join(APP, "public/well-known/agent-skills/index.json");
+const INDEX = join(APP, "public/.well-known/agent-skills/index.json");
 
 interface Card {
   category: string;
@@ -137,7 +137,7 @@ export function skills(): Skill[] {
         `Use the ${entry.name} skill`,
         `Use the ${entry.name} skill (allyhub.com/skills/${entry.name})`,
       ),
-      install: `npx skills add allyhub-ai/skills --skill ${entry.name}`,
+      install: `npx skills add https://allyhub.com --skill ${entry.name}`,
       url: `${BASE}/${entry.name}/`,
       path: `/skills/${entry.name}/`,
     });
@@ -207,7 +207,7 @@ export function llmsText(): string {
 
 > ${doc.definition}
 
-Each skill's page says what it is, when to use it, what you get and what it takes. Add one to a project's folder with \`npx skills add allyhub-ai/skills --skill <name>\`. The machine-readable list is the Agent Skills discovery index: ${INDEX_URL}
+Each skill's page says what it is, when to use it, what you get and what it takes. Add one to a project's folder with \`npx skills add https://allyhub.com --skill <name>\`. The machine-readable list is the Agent Skills discovery index: ${INDEX_URL}
 
 ${groups}
 
