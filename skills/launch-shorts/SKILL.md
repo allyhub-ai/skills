@@ -4,7 +4,7 @@ description: Make a short vertical video (15–30 seconds, 9:16) for each releas
 license: MIT
 compatibility: Needs the AllyHub CLI (npx -y allyhub, Node.js 22.19 or newer) and the allyhub skill (npx skills add allyhub-ai/skills --skill allyhub -g).
 metadata:
-  version: "7"
+  version: "8"
 ---
 
 # Launch shorts
@@ -38,4 +38,4 @@ You need what is launching and where it will be posted. In AllyHub Studio the pe
 ## Making a short
 
 - Unless the person says otherwise: 15–30 seconds, 9:16.
-- What is heard is yours to choose, as what is seen is: AllyHub's built-in sound effects cost nothing; a generated voice or music comes from a cloud tool, which uses credits.
+- What is heard is yours to choose, as what is seen is. AllyHub's AI models make a voice and music that code alone does not match, with the account's credits (`allyhub find` names the one for each); its built-in sound effects are free.
