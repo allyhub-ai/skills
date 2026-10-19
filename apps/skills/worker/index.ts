@@ -1,14 +1,13 @@
-// allyhub.com/skills/ and /.well-known/agent-skills/, from the built site.
-// - The skill index lives at well-known/ in the build and is served at
-//   /.well-known/agent-skills/, where the Agent Skills discovery standard puts it.
-// - A page is answered with its Markdown copy when the request prefers
-//   Markdown (Accept: text/markdown); HTML pages name that copy in a Link header.
+// allyhub.com/skills/ and /skills/<name>/: a page, or its Markdown copy when
+// the request prefers Markdown (Accept: text/markdown); an HTML page names
+// that copy in a Link header. wrangler.jsonc runs this Worker for those
+// paths only: the Markdown copies, llms.txt, the sitemap, the covers and the
+// skill index (/.well-known/agent-skills/) are static assets.
 
 interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
 }
 
-const INDEX = "/.well-known/agent-skills/";
 /** The gallery's pages: /skills/ and /skills/<name>/. */
 const PAGE = /^\/skills\/(?:([a-z0-9]+(?:-[a-z0-9]+)*)\/)?$/u;
 
@@ -45,18 +44,8 @@ const withHeaders = (response: Response, headers: Record<string, string>): Respo
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const { pathname } = new URL(request.url);
-    if (pathname.startsWith(INDEX))
-      return env.ASSETS.fetch(at(request, `/well-known/agent-skills/${pathname.slice(INDEX.length)}`));
-    if (pathname === "/skills") return Response.redirect(new URL("/skills/", request.url).toString(), 301);
-
-    const page = PAGE.exec(pathname);
-    if (!page) {
-      const response = await env.ASSETS.fetch(request);
-      return pathname.endsWith(".md")
-        ? withHeaders(response, { "Content-Type": "text/markdown; charset=utf-8" })
-        : response;
-    }
+    const page = PAGE.exec(new URL(request.url).pathname);
+    if (!page) return env.ASSETS.fetch(request);
     const markdown = page[1] ? `/skills/${page[1]}.md` : "/skills/llms.txt";
     if (prefersMarkdown(request)) {
       const response = await env.ASSETS.fetch(at(request, markdown));

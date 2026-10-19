@@ -1,5 +1,5 @@
 // What the gallery is made of: the skill index (the Agent Skills discovery
-// standard, built by `scripts/index.ts` into public/well-known/) and a
+// standard, built by `scripts/index.ts` into public/.well-known/) and a
 // page doc per skill in the project's content/skills/<name>/doc.mdx, read
 // by its headings. Everything here runs at build time.
 import { execFileSync } from "node:child_process";
@@ -20,7 +20,7 @@ export const CATEGORIES: Record<string, string> = {
 
 const APP = process.cwd();
 const PROJECT = resolve(APP, "../..");
-const INDEX = join(APP, "public/well-known/agent-skills/index.json");
+const INDEX = join(APP, "public/.well-known/agent-skills/index.json");
 
 interface Card {
   category: string;
