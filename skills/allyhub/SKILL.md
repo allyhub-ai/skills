@@ -3,7 +3,7 @@ name: allyhub
 description: 'Make content as code with AllyHub, in a project folder that keeps everything for the next piece — videos (product demos, explainers, launch shorts, ads, talking heads), decks and carousels, docs, sheets — and research the people, products and markets they are for with AllyHub''s AI models and research tools; check, preview and render on this computer (MP4, captions, PNG, PDF, PPTX). Use when the user mentions AllyHub, allyhub dev or "look at my feedback", or wants a video, a demo, an explainer, a deck, slides, a carousel, a doc, a sheet, or research such as finding users, competitors, ads or posts: it finds the skill and the tools for the job.'
 license: MIT
 metadata:
-  version: "1"
+  version: "2"
 ---
 
 # AllyHub
@@ -30,6 +30,13 @@ AllyHub runs, checks, previews and renders what you write as code in a project f
 3. **Look at it by code, never by rendering**: `frames`, `still`, `frames --cuts`, `inspect` (measured facts, for you to judge), `audio`, `timeline`. They draw and mix exactly as the export will; a render adds nothing to see. `console.log` in piece code is printed after these commands' output.
 4. **In Claude and Codex, use the browser's native annotation tools for feedback**; the preview offers no note of its own there. In Claude, mark the preview, choose **Add to chat**, then send the requested change. In Codex, use **Annotate**; each comment comes with the page's address, which says where. A video's address has `t` (seconds into the video, `allyhub frames --at <t>` draws it) and `part`; a sheet's cell has the id `cell-C3` (rows from 1 under the header); a doc's comment quotes the words. Elsewhere, take notes with `allyhub feedback` (or the `feedback` tool of `allyhub mcp`). Read the screenshot first, change what it asks, and say what you did. If the moment is missing, identify it from the picture and the piece; do not invent a timestamp.
 5. **The person exports**, from the preview page. Render yourself only when they ask for the files.
+
+## AI models and research tools
+
+AllyHub's cloud tools make voices, music, images and footage, and research real sources. All AllyHub cloud tools use the person's AllyHub account and credits. AllyHub manages the provider accounts and API keys; no separate provider account or subscription is needed. `allyhub find "<what you need>"` finds them with their prices; the CLI help documents their inputs and quotes.
+
+- The requested work includes ordinary cloud calls with the account's credits. Ask before unusually expensive jobs, large batches or spending beyond the person's budget.
+- `allyhub whoami` checks sign-in and credits. When signed out, run `allyhub login` and include its returned sign-in URL in your reply; continue when the person has signed in. If credits are needed, check the current free-credit options at [AllyHub pricing](https://allyhub.com/pricing) and explain what is available; do not assume a paid subscription is required.
 
 ## Ask first
 

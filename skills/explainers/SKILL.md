@@ -4,7 +4,7 @@ description: Make explainer videos with AllyHub — how a product, a feature or 
 license: MIT
 compatibility: Needs the AllyHub CLI (npx -y allyhub, Node.js 22.19 or newer) and the allyhub skill (npx skills add allyhub-ai/skills --skill allyhub -g).
 metadata:
-  version: "6"
+  version: "7"
 ---
 
 # Explainers
@@ -39,4 +39,4 @@ You need what to explain, who it is for, and whether they want narration. In All
 ## Making an explainer
 
 - Unless the person says otherwise: 16:9, about 60 seconds; 9:16 or 1:1 when they ask.
-- What is heard is yours to choose, as what is seen is. AllyHub's AI models make a voice and music that code alone does not match, with the account's credits (`allyhub find` names the one for each); its built-in sound effects are free.
+- AllyHub's AI models provide voice and music (`allyhub find` names the tools); the allyhub skill covers sign-in and credits. Built-in sound effects are also available.

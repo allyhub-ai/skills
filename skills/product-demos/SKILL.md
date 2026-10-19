@@ -4,7 +4,7 @@ description: Make demo films of a web product with AllyHub, as a video agency wo
 license: MIT
 compatibility: Needs the AllyHub CLI (npx -y allyhub, Node.js 22.19 or newer) and the allyhub skill (npx skills add allyhub-ai/skills --skill allyhub -g).
 metadata:
-  version: "28"
+  version: "29"
 ---
 
 # Product demos
@@ -48,4 +48,4 @@ How it looks, moves, cuts and sounds is yours to decide.
 - `allyhub help` lists the commands and `allyhub help <command>` how one is used; the allyhub skill has the piece API.
 - In Codex, a long command (`allyhub check`, `allyhub run`, `frames --cuts`, `audio`) returns after its `yield_time_ms` and keeps running; give it a `yield_time_ms` of 30000 instead of polling every second.
 - Hide what is private in what you show: a live session's link or QR code, a person's name or data, a key.
-- A top agency's film has a real voice and real music. AllyHub's AI models make them, and images and footage, with the account's credits: what code alone does not match. `allyhub find` names the one for each.
+- AllyHub's AI models provide voice, music, images and footage (`allyhub find` names the tools); the allyhub skill covers sign-in and credits.
