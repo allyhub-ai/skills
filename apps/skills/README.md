@@ -2,7 +2,7 @@
 
 allyhub.com/skills: a page per skill for the people and agents choosing one, built as static HTML with Astro from two things in this project:
 
-- the skill index, `public/well-known/agent-skills/` (`npm run index`: `allyhub skill index` checks every skill in `../../skills` and writes the Agent Skills discovery index and an archive per skill), which gives each skill's name, promise, prompt, cover and version;
+- the skill index, `public/well-known/agent-skills/` (`npm run index`: the local index builder validates skill metadata and cards in `../../skills` and writes the Agent Skills discovery index and an archive per skill), which gives each skill's name, promise, prompt, cover and version;
 - each skill's page doc, `../../content/skills/<name>/doc.mdx`, read by its headings: the title and the paragraph under it (the definition), `When to use it` (its list, then `Use another skill for:` and theirs), `What you get`, `What it takes`, `How it works`, `Questions` (a `###` per question). `content/gallery/doc.mdx` is the gallery's own: its title, definition and questions.
 
 A skill without a page doc is left out of the gallery. A page whose `describes` names another version than the skill's is built, with a warning.
@@ -12,6 +12,7 @@ What agents and crawlers get besides each page: its words as Markdown (`/skills/
 ```bash
 npm ci
 npm run index
+npm test        # index archives, metadata and gallery cards
 npm run dev     # the pages alone, as you edit
 npm run build && npm run serve   # the built site through the Worker, as allyhub.com serves it
 npm run deploy  # by hand; CI deploys main (.github/workflows/gallery.yml)

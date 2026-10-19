@@ -3,19 +3,22 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "index": "allyhub skill index ../../skills --out public/well-known/agent-skills",
+    "index": "node scripts/index.ts",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "deploy": "wrangler deploy",
-    "serve": "wrangler dev"
+    "serve": "wrangler dev",
+    "test": "node --test scripts/*.test.ts"
   },
   "dependencies": {
     "astro": "7.4.0",
     "marked": "18.1.1"
   },
   "devDependencies": {
-    "allyhub": "0.1.0-alpha.7",
-    "wrangler": "4.151.1"
+    "tar": "7.5.22",
+    "wrangler": "4.151.1",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
   }
 }

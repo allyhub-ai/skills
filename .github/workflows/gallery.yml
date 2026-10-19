@@ -43,6 +43,8 @@ jobs:
           cache: npm
           cache-dependency-path: apps/skills/package-lock.json
       - run: npm ci
+      - name: Test the skill index builder
+        run: npm test
       - name: Check and index the skills
         run: npm run index
       - name: Build the gallery
