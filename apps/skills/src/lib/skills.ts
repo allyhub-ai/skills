@@ -137,7 +137,7 @@ export function skills(): Skill[] {
         `Use the ${entry.name} skill`,
         `Use the ${entry.name} skill (allyhub.com/skills/${entry.name})`,
       ),
-      install: `npx skills add allyhub-ai/skills --skill ${entry.name}`,
+      install: `npx skills add https://allyhub.com --skill ${entry.name}`,
       url: `${BASE}/${entry.name}/`,
       path: `/skills/${entry.name}/`,
     });
@@ -207,7 +207,7 @@ export function llmsText(): string {
 
 > ${doc.definition}
 
-Each skill's page says what it is, when to use it, what you get and what it takes. Add one to a project's folder with \`npx skills add allyhub-ai/skills --skill <name>\`. The machine-readable list is the Agent Skills discovery index: ${INDEX_URL}
+Each skill's page says what it is, when to use it, what you get and what it takes. Add one to a project's folder with \`npx skills add https://allyhub.com --skill <name>\`. The machine-readable list is the Agent Skills discovery index: ${INDEX_URL}
 
 ${groups}
 
