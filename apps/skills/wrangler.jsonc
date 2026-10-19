@@ -4,6 +4,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "allyhub-skills",
+  // AllyHub's Cloudflare account, which holds the allyhub.com zone.
+  "account_id": "d701f93241afc0f4438eb00243f048f8",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
   "assets": {
