@@ -1,0 +1,3 @@
+display_name: "Olası kullanıcılar"
+short_description: "Ürününüzün çözdüğü sorunu yaşayan insanlar"
+default_prompt: "candidate-users becerisini kullan: [Ürününüzün URL’si] ihtiyacı olan insanları bul. Genellikle [kime yönelik olduğu] olurlar ve [nerede bulundukları: Reddit, LinkedIn, TikTok, forumlar…] üzerindedirler."

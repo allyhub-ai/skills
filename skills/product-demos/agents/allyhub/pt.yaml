@@ -1,0 +1,3 @@
+display_name: "Demos de produto"
+short_description: "Seu produto, mostrado em uso"
+default_prompt: "Use a skill product-demos: Faça uma demo de [a URL do seu produto] para [quem é o público]. Eles devem lembrar [a principal coisa que ele faz por eles]."

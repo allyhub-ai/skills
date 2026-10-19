@@ -1,0 +1,3 @@
+display_name: "Açıklayıcı videolar"
+short_description: "Bir şeyin nasıl çalıştığı, yaklaşık bir dakikada"
+default_prompt: "explainers becerisini kullan: [Ne olduğunu ya da nasıl çalıştığını] yaklaşık bir dakikada, [kime yönelik olduğu] için açıkla."

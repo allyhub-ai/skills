@@ -5,10 +5,10 @@ Make videos and decks as TypeScript, docs as MDX and sheets as CSV with your cod
 ## Install
 
 ```sh
-npx skills add allyhub-ai/skills -g -a claude-code codex
+npx skills add allyhub-ai/skills --skill allyhub -g -a claude-code codex
 ```
 
-Then ask your agent to use AllyHub. The skill uses the CLI:
+That is the allyhub skill, for every folder. Then ask your agent to use AllyHub. The skill uses the CLI:
 
 ```sh
 npx allyhub help
@@ -17,6 +17,22 @@ npx allyhub help
 Needs Node.js 22.19 or newer. The CLI downloads headless Chrome when first needed. MP4 rendering also needs ffmpeg. Cloud generation and research are optional and use credits on your [AllyHub](https://allyhub.com) account.
 
 This skill accompanies AllyHub 0.1.0-alpha.7.
+
+## Skills for a project
+
+The other skills in `skills/` each add one kind of work to a project: Product demos, Explainers, Launch shorts, Candidate users. They are installed in the project they are used in, never for every folder, so everyone who works on it has the same ones. In the project's folder:
+
+```sh
+npx -y allyhub skill add product-demos
+```
+
+or with the skills CLI, from AllyHub's index:
+
+```sh
+npx skills add https://allyhub.com --skill product-demos
+```
+
+They are listed at [allyhub.com/skills](https://allyhub.com/skills). Their index follows the Agent Skills discovery standard, at `https://allyhub.com/.well-known/agent-skills/index.json`; this repository's CI builds it from `skills/`, and the gallery (`apps/skills`) from it and each skill's page in `content/skills/`, on every change. `skills/README.md` is how a skill here is written, and `AGENTS.md` how this repository, an AllyHub project of its own, is worked in.
 
 ## Codex
 

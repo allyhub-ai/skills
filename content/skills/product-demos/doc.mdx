@@ -1,0 +1,58 @@
+export const describes = { skill: "product-demos", version: 29 };
+
+# Product demos
+
+Product demos is an Agent Skill that makes a 20 to 30 second demo film of a web product, from the product's real screens, the way a video agency would for a client. Give it to Claude Code, Codex or AllyHub Studio with your product's address and who it is for; it comes back with the film, the brand book and script behind it, and a kit for the next films.
+
+## When to use it
+
+Use it for:
+
+- A demo of a web app, a SaaS product or a website, for a home page, a launch or a sales deck.
+- A tour of the product for new users.
+- A series of demos in one brand's look, each built on what the last one made.
+
+Use another skill for:
+
+- How something works, in motion graphics, in about a minute: [Explainers](/skills/explainers/).
+- A short vertical video for each release, for TikTok, Reels or LinkedIn: [Launch shorts](/skills/launch-shorts/).
+- Finding the people who need your product: [Candidate users](/skills/candidate-users/).
+
+## What you get
+
+- The first film: 16:9, in English, 20 to 30 seconds, unless you ask for another length, format or language.
+- A brand book with the brand's colours, fonts and voice.
+- A product brief and the competitors.
+- A direction for the brand's films, argued so you can say yes to it.
+- The script, a row per moment, written before the film.
+- A kit for the next films: the product's screens, the brand's elements, its music and sounds.
+- A list of what to make next.
+
+## What it takes
+
+- **Time:** about an hour for the first film. Later ones are faster.
+- **Cost:** the skill is free (MIT) and AllyHub runs on your computer for free. AI voice, music, images and footage use AllyHub credits, with no separate provider accounts or API keys.
+- **From you:** the product's address and who it is for. A login or a test account if the product needs one.
+- **On your computer:** the agent opens your product in a browser, uses AllyHub to make the film, and keeps everything in your project's folder. It never posts or publishes anything unless you ask.
+- **Agents:** Claude Code or Codex with Node.js 22.19 or newer, or AllyHub Studio, which brings everything.
+
+## How it works
+
+1. The agent uses your product as a visitor would and studies the brand and its competitors.
+2. It writes the direction and the script, then makes the film from the product's real screens.
+3. You watch the film take shape in a preview, mark what to change, and the agent changes it.
+4. You export the film. What it made stays in the project, so the next film starts from it.
+
+## Questions
+
+### Does the film show my real product?
+
+Yes: its real screens and its real numbers, captured as the agent uses it. The agent lists the claims it inferred, so you can check them before you publish.
+
+### What if my product needs a login?
+
+The agent asks you for one, or for a test account. It stops to ask only for what it cannot decide.
+
+### Can I make more films after the first?
+
+Yes. The first round leaves a kit and a list of what to make next; each new film reuses them.

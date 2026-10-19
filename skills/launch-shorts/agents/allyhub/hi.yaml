@@ -1,0 +1,3 @@
+display_name: "लॉन्च शॉर्ट्स"
+short_description: "हर रिलीज़ के लिए एक छोटा वर्टिकल वीडियो"
+default_prompt: "launch-shorts स्किल का उपयोग करें: [क्या लॉन्च हो रहा है] के बारे में [TikTok, Reels, LinkedIn या X] के लिए एक शॉर्ट बनाएँ।"

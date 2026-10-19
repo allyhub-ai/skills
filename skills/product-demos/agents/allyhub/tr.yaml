@@ -1,0 +1,3 @@
+display_name: "Ürün demoları"
+short_description: "Ürününüz, kullanılarak gösterilir"
+default_prompt: "product-demos becerisini kullan: [Ürününüzün URL’si] için bir demo yap. Hedef kitle: [kime yönelik olduğu]. Akıllarında kalması gereken: [onlar için yaptığı tek şey]."

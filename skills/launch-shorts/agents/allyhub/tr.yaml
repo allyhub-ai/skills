@@ -1,0 +1,3 @@
+display_name: "Lansman kısa videoları"
+short_description: "Her sürüm için kısa, dikey bir video"
+default_prompt: "launch-shorts becerisini kullan: [Yayımlanan şey] hakkında [TikTok, Reels, LinkedIn veya X] için kısa bir video yap."

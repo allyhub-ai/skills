@@ -1,0 +1,3 @@
+display_name: "产品演示"
+short_description: "通过实际操作，展示你的产品"
+default_prompt: "使用 product-demos 技能：为[你的产品网址]做一支演示视频，给[目标用户]看。他们应该记住[它为他们做的那一件事]。"

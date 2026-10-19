@@ -1,0 +1,3 @@
+display_name: "製品デモ"
+short_description: "実際に使って見せる製品紹介"
+default_prompt: "product-demos スキルを使って：[製品の URL] のデモを [対象となる人] 向けに作ってください。見た人に [製品が役立つ一番のポイント] を覚えてもらいたいです。"

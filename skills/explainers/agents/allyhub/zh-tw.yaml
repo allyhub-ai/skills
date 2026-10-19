@@ -1,0 +1,3 @@
+display_name: "說明影片"
+short_description: "大約一分鐘，說明某件事怎麼運作"
+default_prompt: "使用 explainers 技能：用大約一分鐘，向[給誰看]說明[它是什麼，或它怎麼運作]。"

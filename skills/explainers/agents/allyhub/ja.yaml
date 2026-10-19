@@ -1,0 +1,3 @@
+display_name: "解説動画"
+short_description: "仕組みを約 1 分で解説"
+default_prompt: "explainers スキルを使って：[何なのか、またはどう動くのか] を [対象となる人] 向けに、約 1 分で解説してください。"

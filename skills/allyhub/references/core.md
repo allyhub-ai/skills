@@ -17,7 +17,7 @@ Import files inside the workspace with relative paths. URLs and files outside th
 ## A workspace
 
 ```
-AGENTS.md                           this project's standing instructions, when it has them
+AGENTS.md                           this project's standing instructions; CLAUDE.md brings it in
 allyhub.config.ts                   defaults (languages, formats) and the look
 .gitignore                          has the line .local/
 
@@ -39,7 +39,8 @@ assets/text/en.json                 text several items share, one file per langu
 
 components/title-card.ts            the workspace's own components
 
-agent/memory.md, agent/daily-notes/ the agent's own; never built
+.agents/skills/                     the skills the project works with; never built
+.agents/memory/                     what the project has learned: MEMORY.md, notes/; never built
 .local/                             this computer only: work/, out/, cache/, trash/
 ```
 
@@ -49,7 +50,7 @@ agent/memory.md, agent/daily-notes/ the agent's own; never built
 - Folders above an item only group items. An item cannot hold another item.
 - A file under `content/` in no item's folder is a loose file: it is not checked, and no piece is found in it.
 - Every entry file under `content/` is found. A piece that is not an item's entry file is AK-M002. An entry file that is not a piece, a second entry file in one folder, an item inside an item and an output of the other kind are AK-M003.
-- Only `content/`, `assets/` and `components/` are built, checked and watched; never `agent/`, `.local/` or `apps/`. Whatever a piece imports must not live in `.local/`.
+- Only `content/`, `assets/` and `components/` are built, checked and watched; never `.agents/`, `.claude/`, `.local/` or `apps/`. Whatever a piece imports must not live in `.local/`.
 
 The `vite.config.ts` in the workspace root is read: its `plugins`, `resolve`, `css`, `define`, `json`, `assetsInclude` and `oxc` take effect, after AllyHub's plugins; AllyHub decides the other settings (output, server, env files, the `public` folder).
 

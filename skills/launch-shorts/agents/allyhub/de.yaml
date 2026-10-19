@@ -1,0 +1,3 @@
+display_name: "Launch-Shorts"
+short_description: "Ein kurzes Hochformatvideo für jedes Release"
+default_prompt: "Nutze den Skill launch-shorts: Mach einen Short über [was gelauncht wird] für [TikTok, Reels, LinkedIn oder X]."

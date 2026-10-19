@@ -1,0 +1,3 @@
+display_name: "출시 쇼츠"
+short_description: "릴리스마다 만드는 짧은 세로 영상"
+default_prompt: "launch-shorts 스킬을 사용해: [출시하는 것]에 대한 쇼츠를 [TikTok, Reels, LinkedIn 또는 X]용으로 만들어 주세요."

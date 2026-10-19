@@ -1,0 +1,19 @@
+title: Searches
+primary: query
+columns:
+  source: { width: 140 }
+  access:
+    type: select
+    options:
+      - { name: free, color: green }
+      - { name: paid, color: purple }
+  query: { width: 240, wrap: true }
+  why: { width: 240, wrap: true }
+  last_run: { type: date, format: short }
+  found: { type: number, width: 80 }
+  kept: { type: number, width: 80 }
+  state:
+    type: select
+    options:
+      - { name: active, color: green }
+      - { name: retired, color: gray }

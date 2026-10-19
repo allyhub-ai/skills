@@ -1,0 +1,4 @@
+interface:
+  display_name: Launch shorts
+  short_description: A short vertical video for each release
+  default_prompt: "Use the launch-shorts skill: make a short about [what’s launching] for [TikTok, Reels, LinkedIn or X]."

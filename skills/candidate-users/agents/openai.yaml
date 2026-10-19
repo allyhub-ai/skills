@@ -1,0 +1,4 @@
+interface:
+  display_name: Candidate users
+  short_description: People who have the problem your product solves
+  default_prompt: "Use the candidate-users skill: find people who need [your product’s URL]. They’re usually [who it’s for], on [where they hang out: Reddit, LinkedIn, TikTok, forums…]."

@@ -1,0 +1,8 @@
+title: Release history
+columns:
+  date: { type: date, format: short }
+  launch: { type: text, width: 240 }
+  posted: { type: multi-select, options: [TikTok, Reels, Shorts, LinkedIn, X] }
+  short: file
+  views: number
+  how it did: { type: text, wrap: true, width: 320 }

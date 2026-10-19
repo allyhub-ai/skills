@@ -1,0 +1,3 @@
+display_name: "Người dùng tiềm năng"
+short_description: "Những người gặp vấn đề mà sản phẩm của bạn giải quyết"
+default_prompt: "Dùng skill candidate-users: Tìm những người cần [URL sản phẩm của bạn]. Họ thường là [người dùng mục tiêu], hay ở [nơi họ thường ở: Reddit, LinkedIn, TikTok, diễn đàn…]."

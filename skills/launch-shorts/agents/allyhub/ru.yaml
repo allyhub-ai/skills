@@ -1,0 +1,3 @@
+display_name: "Ролики к релизам"
+short_description: "Короткое вертикальное видео к каждому релизу"
+default_prompt: "Используй навык launch-shorts: Сделайте короткий ролик о [что запускается] для [TikTok, Reels, LinkedIn или X]."

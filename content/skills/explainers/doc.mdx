@@ -1,0 +1,55 @@
+export const describes = { skill: "explainers", version: 7 };
+
+# Explainers
+
+Explainers is an Agent Skill that makes a short motion-graphics video of how a product, a feature or an idea works, in about a minute. Give it to Claude Code, Codex or AllyHub Studio with what to explain and who it is for; every later explainer uses the same words and the same look, so they read as a series.
+
+## When to use it
+
+Use it for:
+
+- How a product or a feature works, for customers or new users.
+- An idea explained at the level of the people watching: a newcomer, a customer or an engineer.
+- A series of explainers that share their terms and their look.
+
+Use another skill for:
+
+- A demo made from a web product's real screens: [Product demos](/skills/product-demos/).
+- A short vertical video for each release: [Launch shorts](/skills/launch-shorts/).
+- Finding the people who need your product: [Candidate users](/skills/candidate-users/).
+
+## What you get
+
+- The explainer: 16:9, about 60 seconds, or 9:16 or 1:1 if you ask. Without narration unless you want it.
+- Its plan, proposed before it is made, for you to agree to.
+- A glossary of the terms it uses, each with the plain words it is explained in, used the same way every time.
+- The graphics it is built from, such as diagrams, charts and labelled shapes, made once and reused.
+- The look, its colours and fonts, once you have agreed on it.
+
+## What it takes
+
+- **Cost:** the skill is free (MIT) and AllyHub runs on your computer for free. Built-in sound effects cost nothing. AI voice and music use AllyHub credits, with no separate provider accounts or API keys.
+- **From you:** what to explain, who it is for, and whether you want narration. A page, a doc or a diagram to work from, if you have one.
+- **On your computer:** the agent makes the explainer with AllyHub and keeps everything in your project's folder. It never posts or publishes anything unless you ask.
+- **Agents:** Claude Code or Codex with Node.js 22.19 or newer, or AllyHub Studio, which brings everything.
+
+## How it works
+
+1. You say what to explain and who it is for. If the level is unclear, the agent asks one question.
+2. It reads the source you give it before it writes anything, and asks rather than guesses how something works.
+3. It proposes the explainer in a few lines and makes it once you agree.
+4. You watch it take shape in a preview, mark what to change, and export it. The next explainer starts from the same glossary, graphics and look.
+
+## Questions
+
+### Does an explainer need narration?
+
+No. Without a word from you it has none. Ask for a voice and the agent adds one; a generated voice uses credits.
+
+### What if it gets my product wrong?
+
+It works from the sources you give it and asks instead of guessing. You agree to the plan before it makes the explainer, and you can mark any moment of the preview to change it.
+
+### Can it make a series?
+
+Yes. Each explainer reads the glossary first and reuses the graphics and the look, so the series keeps the same terms and style.

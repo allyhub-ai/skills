@@ -1,0 +1,3 @@
+display_name: "發表短影音"
+short_description: "每次發布都有一支直式短影音"
+default_prompt: "使用 launch-shorts 技能：為[要發表的內容]做一支短影音，發布在[TikTok、Reels、LinkedIn 或 X]。"
